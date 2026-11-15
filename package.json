@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "swole",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.js",
+    "check": "tsc -p jsconfig.json && prettier --check . && eslint .",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "test": "node --test --experimental-test-coverage --test-coverage-include=\"src/**/*.js\" \"test/**/*.test.js\"",
+    "test:e2e": "playwright test",
+    "mirror": "bash scripts/mirror.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.0",
+    "esbuild": "^0.25.0",
+    "eslint": "^9.26.0",
+    "eslint-plugin-jsdoc": "^50.6.11",
+    "isomorphic-git": "^1.29.0",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,8 @@
+DAY: MONDAY
+START: 2026-11-09T18:00:00.000Z
+END: 2026-11-09T18:52:00.000Z
+
+Deadlift | 140kg x 4
+Bench Press | 90kg x 6
+Pull-Up | +15kg x 6
+Front Squat | 80kg x 6
