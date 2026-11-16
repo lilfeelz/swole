@@ -431,12 +431,51 @@ select option {
 .row.invalid input {
   border-color: var(--err);
 }
+.row {
+  position: relative;
+}
 .row .err {
   display: none;
-  grid-column: 3;
-  margin-top: -6px;
-  font-size: 12px;
+  position: absolute;
+  top: calc(100% - 8px);
+  left: 38px;
+  right: 0;
+  z-index: 10;
+  padding: 10px 12px;
+  background: #14151e;
+  border: 1px solid var(--err);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--fg);
+  overflow-wrap: anywhere;
+}
+.row .err::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 18px;
+  width: 10px;
+  height: 10px;
+  background: inherit;
+  border-left: 1px solid var(--err);
+  border-top: 1px solid var(--err);
+  transform: rotate(45deg);
+}
+.row .err code {
+  display: block;
+  margin-top: 6px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgba(255, 85, 85, 0.12);
   color: var(--err);
+  font:
+    12px/1.4 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  white-space: pre-wrap;
 }
 .row.show-err .err {
   display: block;

@@ -310,7 +310,11 @@ export function mount(api) {
     if (reason) {
       const el = document.createElement("div");
       el.className = "err";
+      el.setAttribute("role", "tooltip");
       el.textContent = reason;
+      const code = document.createElement("code");
+      code.textContent = input.value;
+      el.appendChild(code);
       r.appendChild(el);
     }
     $("save").disabled = Boolean($("list").querySelector(".row.invalid"));
@@ -636,13 +640,19 @@ export function mount(api) {
     check(/** @type {HTMLElement} */ (r));
     saveDraft();
   });
+  // Tapping an invalid exercise name toggles a popover with the parse error; any other tap closes it.
+  document.addEventListener("click", (evt) => {
+    const name = /** @type {HTMLElement} */ (evt.target).closest(
+      ".row.invalid .name",
+    );
+    const row = name?.closest(".row");
+    for (const r of document.querySelectorAll(".row.show-err"))
+      if (r !== row) r.classList.remove("show-err");
+    row?.classList.toggle("show-err");
+  });
   $("list").addEventListener("click", (evt) => {
     const target = /** @type {HTMLElement} */ (evt.target);
     const btn = target.closest(".del-btn");
-    // Tapping an invalid exercise shows or hides why its line does not parse.
-    const invalid = target.closest(".row.invalid");
-    if (!btn && invalid && !target.closest("input"))
-      invalid.classList.toggle("show-err");
     if (!btn) return;
     const row = btn.closest(".row");
     if (row) {

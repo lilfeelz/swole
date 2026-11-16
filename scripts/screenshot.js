@@ -16,7 +16,7 @@ await page.goto(`http://127.0.0.1:${server.address().port}/`);
 await page.locator("#day").selectOption("MONDAY");
 const inputs = page.locator("#list .row input");
 await inputs.nth(0).fill("2x4 / 145kg");
-await inputs.nth(1).fill("heavy");
+await inputs.nth(1).fill("3x6 @11 / 92.5kg");
 await inputs.nth(2).click();
 await page.locator("#list .row.invalid").waitFor();
 await page.locator("#list .row.invalid .name").click();

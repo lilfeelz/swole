@@ -197,11 +197,16 @@ test("an invalid line shows the reason and blocks save until fixed", async ({
   await expect(row.locator(".err")).toBeHidden();
   await row.locator(".name").click();
   await expect(row.locator(".err")).toContainText("unexpected");
+  await expect(row.locator(".err code")).toHaveText("heavy");
+  await page.locator("#title").click();
+  await expect(row.locator(".err")).toBeHidden();
   await expect(page.locator("#save")).toBeDisabled();
 
   await input.fill("Deadlift / 2x4");
   await input.blur();
-  await expect(row.locator(".err")).toHaveText("leave out the exercise name");
+  await expect(row.locator(".err")).toContainText(
+    "leave out the exercise name",
+  );
 
   await input.fill("2x4 / 150kg");
   await input.blur();
