@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   DAYS,
   key,
-  cleanLoad,
+  splitLine,
   resolveDay,
   parseRoutine,
   validateRoutine,
@@ -20,10 +20,12 @@ test("key normalizes names correctly", () => {
   assert.equal(key("Pull-Up (Weighted)"), "pullupweighted");
 });
 
-test("cleanLoad strips reps and trims", () => {
-  assert.equal(cleanLoad("100kg x 5 reps"), "100kg x 5");
-  assert.equal(cleanLoad("90kg x 6r"), "90kg x 6");
-  assert.equal(cleanLoad("45s"), "45s");
+test("splitLine splits at the first slash only", () => {
+  assert.deepEqual(splitLine("Squat / 3x5 / 80kg"), {
+    name: "Squat",
+    rest: "3x5 / 80kg",
+  });
+  assert.deepEqual(splitLine("Squat"), { name: "Squat", rest: "" });
 });
 
 test("resolveDay picks today or parses input", () => {
@@ -35,12 +37,12 @@ test("resolveDay picks today or parses input", () => {
 test("parseRoutine extracts days and exercises skipping cardio", () => {
   const text = `
 MONDAY
-Deadlift | 3x4-6
-Bike | 20m
-Bench Press | 3x6-8
+Deadlift / 3x4-6
+Bike / 20m
+Bench Press / 3x6-8
 
 WEDNESDAY
-Squat | 3x5
+Squat / 3x5
 `;
   const routine = parseRoutine(text);
   assert.equal(routine.MONDAY.length, 2);
@@ -56,17 +58,20 @@ test("parseSession and formatSession roundtrip cleanly", () => {
 START: 2026-11-15T18:00:00.000Z
 END: 2026-11-15T18:55:00.000Z
 
-Deadlift | 140kg x 5
-Bench Press | 92.5kg x 6
+Deadlift / 2x5 / 140kg
+Bench Press / 3x6 / 92.5kg
+Pull-Up / 
 `;
   const parsed = parseSession(raw);
   assert.equal(parsed.day, "MONDAY");
-  assert.equal(parsed.entries.length, 2);
+  assert.equal(parsed.entries.length, 3);
+  assert.equal(parsed.entries[0].load, "2x5 / 140kg");
   assert.equal(validateSession(parsed).ok, true);
 
   const formatted = formatSession(parsed);
   assert.ok(formatted.includes("DAY: MONDAY"));
-  assert.ok(formatted.includes("Deadlift | 140kg x 5"));
+  assert.ok(formatted.includes("Deadlift / 2x5 / 140kg"));
+  assert.ok(!formatted.includes("Pull-Up"), "entry without load is not saved");
 });
 
 test("isoWeekParts and logPathForSession compute correct path", () => {
@@ -82,13 +87,13 @@ test("lastLoadsFromSessions aggregates latest load per exercise", () => {
   const sessions = [
     {
       startAt: new Date("2026-11-01T10:00:00Z"),
-      entries: [{ name: "Squat", load: "100kg x 5" }],
+      entries: [{ name: "Squat", load: "1x5 / 100kg" }],
     },
     {
       startAt: new Date("2026-11-08T10:00:00Z"),
-      entries: [{ name: "Squat", load: "105kg x 5" }],
+      entries: [{ name: "Squat", load: "1x5 / 105kg" }],
     },
   ];
   const loads = lastLoadsFromSessions(sessions);
-  assert.equal(loads["squat"], "105kg x 5");
+  assert.equal(loads["squat"], "1x5 / 105kg");
 });

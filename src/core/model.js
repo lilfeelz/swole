@@ -29,13 +29,16 @@ export function key(name) {
 }
 
 /**
- * Normalizes historic load text: strips "r"/"rep"/"reps" while keeping "s" and "m".
+ * Splits a workline at the first "/" into the exercise name and the reduced line.
  *
- * @param {string} raw Load text from a log file.
- * @returns {string} Cleaned load text.
+ * @param {string} line Full workline, e.g. "Squat / 3x5 / 80kg".
+ * @returns {{ name: string, rest: string }} Trimmed name and reduced line.
  */
-export function cleanLoad(raw) {
-  return String(raw || "").replace(/(\d+)\s*(?:r|reps?)\b/gi, "$1");
+export function splitLine(line) {
+  const i = line.indexOf("/");
+  return i < 0
+    ? { name: line.trim(), rest: "" }
+    : { name: line.slice(0, i).trim(), rest: line.slice(i + 1).trim() };
 }
 
 /**
@@ -53,7 +56,7 @@ export function resolveDay(raw, now = new Date()) {
 }
 
 /**
- * Parses routine text containing weekday headers followed by "Exercise | scheme" lines.
+ * Parses routine text containing weekday headers followed by "Exercise / scheme" lines.
  *
  * @param {string} text Routine file contents.
  * @returns {Record<string, Array<{ name: string, scheme: string }>>} Day to exercise list.
@@ -76,11 +79,9 @@ export function parseRoutine(text) {
 
     if (!currentDay) continue;
 
-    const parts = line.split("|").map((p) => p.trim());
-    const name = parts[0];
-    const scheme = parts.slice(1).join(" | ").trim();
+    const { name, rest } = splitLine(line);
     if (name && !CARDIO.test(name)) {
-      blocks[currentDay].push({ name, scheme: scheme || "" });
+      blocks[currentDay].push({ name, scheme: rest });
     }
   }
 
@@ -131,7 +132,7 @@ export function parseDateValue(raw) {
 }
 
 /**
- * Parses raw session text with DAY, START, END headers and "Exercise | load" entries.
+ * Parses raw session text with DAY, START, END headers and "Exercise / load" entries.
  *
  * @param {string} text Raw session file text.
  * @returns {{ day: string, startAt: Date|null, endAt: Date|null, entries: Array<{ name: string, load: string }> }} Parsed session.
@@ -167,13 +168,8 @@ export function parseSession(text) {
       continue;
     }
 
-    const parts = line.split("|").map((p) => p.trim());
-    if (parts[0]) {
-      entries.push({
-        name: parts[0],
-        load: parts.slice(1).join(" | ").trim(),
-      });
-    }
+    const { name, rest } = splitLine(line);
+    if (name) entries.push({ name, load: rest });
   }
 
   return { day, startAt, endAt, entries };
@@ -181,6 +177,7 @@ export function parseSession(text) {
 
 /**
  * Serializes a session to plain text suitable for session.txt or log files.
+ * Entries without a load are not done and are left out.
  *
  * @param {{ day: string, startAt?: Date|null, endAt?: Date|null, entries?: Array<{ name: string, load: string }> }} session Session object.
  * @returns {string} Serialized text.
@@ -197,9 +194,7 @@ export function formatSession(session) {
   for (const entry of session.entries || []) {
     const name = String(entry.name || "").trim();
     const load = String(entry.load || "").trim();
-    if (name) {
-      lines.push(load ? `${name} | ${load}` : name);
-    }
+    if (name && load) lines.push(`${name} / ${load}`);
   }
 
   return lines.join("\n") + "\n";
@@ -301,7 +296,7 @@ export function lastLoadsFromSessions(sessions) {
       const n = String(entry.name || "").trim();
       const l = String(entry.load || "").trim();
       if (n && l) {
-        map[key(n)] = cleanLoad(l);
+        map[key(n)] = l;
       }
     }
   }

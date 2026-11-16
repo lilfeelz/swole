@@ -2,7 +2,7 @@ DAY: THURSDAY
 START: 2026-11-12T18:00:00.000Z
 END: 2026-11-12T18:55:00.000Z
 
-Back Squat | 110kg x 6
-Overhead Press | 60kg x 6
-Row | 75kg x 6
-Rev. Nordic Curl | BW x 6
+Back Squat / 3x6 / 110kg
+Overhead Press / 3x6 / 60kg
+Row / 3x6 / 75kg
+Rev. Nordic Curl / 3x6

@@ -9,6 +9,7 @@ export type Weekday =
 
 export type Day = Weekday | string;
 
+/** scheme and last are reduced worklines, e.g. "2x4+" and "2x4 / 110kg". */
 export interface Exercise {
   name: string;
   scheme: string;
@@ -17,6 +18,7 @@ export interface Exercise {
 
 export type Routine = Record<Day, Exercise[]>;
 
+/** load is a reduced workline; empty means not done. */
 export interface Entry {
   name: string;
   load: string;

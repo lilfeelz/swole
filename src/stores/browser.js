@@ -7,14 +7,14 @@ import { parseRoutine } from "../core/model.js";
  */
 
 const DEFAULT_ROUTINE = `MONDAY
-Deadlift | 3x4-6
-Bench Press | 3x6-8
-Pull-Up | 3x6-8
+Deadlift / 3x4-6
+Bench Press / 3x6-8
+Pull-Up / 3x6-8
 
 THURSDAY
-Squat | 3x4-6
-Overhead Press | 3x6-8
-Barbell Row | 3x6-8`;
+Squat / 3x4-6
+Overhead Press / 3x6-8
+Barbell Row / 3x6-8`;
 
 /**
  * Creates a browser localStorage store for demo and offline use.

@@ -21,7 +21,7 @@ testStoreContract("BrowserStore", async () => {
 // 2. Git Store
 testStoreContract("GitStore", async () => {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "swole-test-"));
-  const routineContent = `MONDAY\nSquat | 3x5\nBench Press | 3x5\n`;
+  const routineContent = `MONDAY\nSquat / 3x5\nBench Press / 3x5\n`;
   await fs.writeFile(path.join(tempDir, "routine.txt"), routineContent, "utf8");
   return createGitStore({ fs, dir: tempDir });
 });
