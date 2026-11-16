@@ -11,4 +11,4 @@ run_worker_first = ["/api/*"]
 # Create with `wrangler kv namespace create SWOLE_KV` and put its id here.
 [[kv_namespaces]]
 binding = "SWOLE_KV"
-id = "REPLACE_WITH_NAMESPACE_ID"
+id = "fa2ae5fbe4924638b4fa8b1c118aab02"

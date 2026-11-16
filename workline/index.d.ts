@@ -69,6 +69,7 @@ export type Target = {
 export type Weight = {
     value?: number;
     unit?: "kg" | "lb";
+    added?: true;
     ask?: true;
 };
 /**

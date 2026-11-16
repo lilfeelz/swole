@@ -2,330 +2,1364 @@
   {
     "in": "3x8",
     "canonical": "3x8",
-    "lines": [{ "sets": [
-      { "target": { "min": 8, "unit": "reps" } },
-      { "target": { "min": 8, "unit": "reps" } },
-      { "target": { "min": 8, "unit": "reps" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "in": "2X8-12   62.50kg",
     "canonical": "2x8-12 62.5kg",
-    "lines": [{ "sets": [
-      { "target": { "min": 8, "max": 12, "unit": "reps" }, "weight": { "value": 62.5, "unit": "kg" } },
-      { "target": { "min": 8, "max": 12, "unit": "reps" }, "weight": { "value": 62.5, "unit": "kg" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "max": 12,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 62.5,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "max": 12,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 62.5,
+              "unit": "kg"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "in": "Bench  Press/1x5 @8 ,1x5+ @9+",
     "canonical": "Bench Press / 1x5 @8, 1x5+ @9+",
-    "lines": [{ "name": "Bench Press", "sets": [
-      { "target": { "min": 5, "unit": "reps" }, "rpe": { "value": 8 } },
-      { "target": { "min": 5, "unit": "reps", "amrap": true }, "rpe": { "value": 9, "ask": true } }
-    ] }]
+    "lines": [
+      {
+        "name": "Bench Press",
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rpe": {
+              "value": 8
+            }
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps",
+              "amrap": true
+            },
+            "rpe": {
+              "value": 9,
+              "ask": true
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "in": "Squat / 1x5 80%, 1x3 100kg+ / 180s 70%",
     "canonical": "Squat / 1x5 80%, 1x3 100kg+ / 70% 3m",
-    "lines": [{ "name": "Squat", "sets": [
-      { "target": { "min": 5, "unit": "reps" }, "percent": { "value": 80 }, "rest": 180 },
-      { "target": { "min": 3, "unit": "reps" }, "weight": { "value": 100, "unit": "kg", "ask": true }, "rest": 180 }
-    ] }]
+    "lines": [
+      {
+        "name": "Squat",
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "percent": {
+              "value": 80
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 3,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 100,
+              "unit": "kg",
+              "ask": true
+            },
+            "rest": 180
+          }
+        ]
+      }
+    ]
   },
   {
     "in": "1x6 90s ?+ @8, 1x6 / 2min",
     "canonical": "1x6 ?+ @8 90s, 1x6 / 2m",
-    "lines": [{ "sets": [
-      { "target": { "min": 6, "unit": "reps" }, "weight": { "ask": true }, "rpe": { "value": 8 }, "rest": 90 },
-      { "target": { "min": 6, "unit": "reps" }, "rest": 120 }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 6,
+              "unit": "reps"
+            },
+            "weight": {
+              "ask": true
+            },
+            "rpe": {
+              "value": 8
+            },
+            "rest": 90
+          },
+          {
+            "target": {
+              "min": 6,
+              "unit": "reps"
+            },
+            "rest": 120
+          }
+        ]
+      }
+    ]
   },
   {
     "in": "Plank / 2x30s+\nRow / 1x2km @7",
     "canonical": "Plank / 2x30s+\nRow / 1x2km @7",
     "lines": [
-      { "name": "Plank", "sets": [
-        { "target": { "min": 30, "unit": "s", "amrap": true } },
-        { "target": { "min": 30, "unit": "s", "amrap": true } }
-      ] },
-      { "name": "Row", "sets": [
-        { "target": { "min": 2, "unit": "km" }, "rpe": { "value": 7 } }
-      ] }
+      {
+        "name": "Plank",
+        "sets": [
+          {
+            "target": {
+              "min": 30,
+              "unit": "s",
+              "amrap": true
+            }
+          },
+          {
+            "target": {
+              "min": 30,
+              "unit": "s",
+              "amrap": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "Row",
+        "sets": [
+          {
+            "target": {
+              "min": 2,
+              "unit": "km"
+            },
+            "rpe": {
+              "value": 7
+            }
+          }
+        ]
+      }
     ]
   },
   {
     "in": "1×0.4KM 45s",
     "canonical": "1x0.4km 45s",
-    "lines": [{ "sets": [{ "target": { "min": 0.4, "unit": "km" }, "rest": 45 }] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 0.4,
+              "unit": "km"
+            },
+            "rest": 45
+          }
+        ]
+      }
+    ]
   },
   {
     "in": "1x5-5 20lb",
     "canonical": "1x5 20lb",
-    "lines": [{ "sets": [{ "target": { "min": 5, "unit": "reps" }, "weight": { "value": 20, "unit": "lb" } }] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 20,
+              "unit": "lb"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "legacy: @ with a unit is weight",
     "in": "3x8@60kg\n2x30s@20LB",
     "canonical": "3x8 60kg\n2x30s 20lb",
     "lines": [
-      { "sets": [
-        { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" } },
-        { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" } },
-        { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" } }
-      ] },
-      { "sets": [
-        { "target": { "min": 30, "unit": "s" }, "weight": { "value": 20, "unit": "lb" } },
-        { "target": { "min": 30, "unit": "s" }, "weight": { "value": 20, "unit": "lb" } }
-      ] }
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          }
+        ]
+      },
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 30,
+              "unit": "s"
+            },
+            "weight": {
+              "value": 20,
+              "unit": "lb"
+            }
+          },
+          {
+            "target": {
+              "min": 30,
+              "unit": "s"
+            },
+            "weight": {
+              "value": 20,
+              "unit": "lb"
+            }
+          }
+        ]
+      }
     ]
   },
   {
     "comment": "errors keep their raw text and position; blank lines drop",
     "in": "3x8@60\n\n1x5\nBench\n3x8 60kg 50%",
     "canonical": "3x8@60\n1x5\nBench\n3x8 60kg 50%",
-    "errors": [0, 3, 4],
-    "lines": [{ "sets": [{ "target": { "min": 5, "unit": "reps" } }] }]
+    "errors": [
+      0,
+      3,
+      4
+    ],
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            }
+          }
+        ]
+      }
+    ]
   },
-  { "in": "0x5", "errors": [0] },
-  { "in": "1001x5", "errors": [0] },
-  { "in": "5000000000x5", "errors": [0] },
-  { "in": "3x8 1441m", "errors": [0] },
-  { "in": "3x8 86401s", "errors": [0] },
-  { "in": "3x12-8", "errors": [0] },
-  { "in": "3x8reps", "errors": [0] },
-  { "in": "3x8 @8 @9", "errors": [0] },
-  { "in": "3x8 @0", "errors": [0] },
-  { "in": "3x8 250%", "errors": [0] },
-  { "in": "3x8 60", "errors": [0] },
-  { "in": "3x8 /", "errors": [0] },
-  { "in": "A / 3x8 / 60kg / 90s", "errors": [0] },
-  { "in": "/ 3x8", "errors": [0] },
+  {
+    "in": "0x5",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "1001x5",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "5000000000x5",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 1441m",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 86401s",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x12-8",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8reps",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 @8 @9",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 @0",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 250%",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 60",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 /",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "A / 3x8 / 60kg / 90s",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "/ 3x8",
+    "errors": [
+      0
+    ]
+  },
   {
     "comment": "whitespace inside the head is free",
     "in": "3 x 8 - 10",
     "canonical": "3x8-10",
-    "lines": [{ "sets": [
-      { "target": { "min": 8, "max": 10, "unit": "reps" } },
-      { "target": { "min": 8, "max": 10, "unit": "reps" } },
-      { "target": { "min": 8, "max": 10, "unit": "reps" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "max": 10,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "max": 10,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "max": 10,
+              "unit": "reps"
+            }
+          }
+        ]
+      }
+    ]
   },
-  { "in": "1.5x8", "errors": [0] },
-  { "in": "3x8 1.5min", "errors": [0] },
-  { "in": "3x8 @ 8", "errors": [0] },
-  { "in": "Bench 3x8", "errors": [0] },
+  {
+    "in": "1.5x8",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 1.5min",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 @ 8",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "Bench 3x8",
+    "errors": [
+      0
+    ]
+  },
   {
     "comment": "the first default may touch the slash; @ may touch anything",
     "in": "Squat / 3x5 80%/3min\n3x8 60kg@8",
     "canonical": "Squat / 3x5 80% / 3m\n3x8 60kg @8",
     "lines": [
-      { "name": "Squat", "sets": [
-        { "target": { "min": 5, "unit": "reps" }, "percent": { "value": 80 }, "rest": 180 },
-        { "target": { "min": 5, "unit": "reps" }, "percent": { "value": 80 }, "rest": 180 },
-        { "target": { "min": 5, "unit": "reps" }, "percent": { "value": 80 }, "rest": 180 }
-      ] },
-      { "sets": [
-        { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" }, "rpe": { "value": 8 } },
-        { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" }, "rpe": { "value": 8 } },
-        { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" }, "rpe": { "value": 8 } }
-      ] }
+      {
+        "name": "Squat",
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "percent": {
+              "value": 80
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "percent": {
+              "value": 80
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "percent": {
+              "value": 80
+            },
+            "rest": 180
+          }
+        ]
+      },
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            },
+            "rpe": {
+              "value": 8
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            },
+            "rpe": {
+              "value": 8
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            },
+            "rpe": {
+              "value": 8
+            }
+          }
+        ]
+      }
     ]
   },
-  { "comment": "mods need whitespace between them", "in": "3x8 60kg50%", "errors": [0] },
-  { "in": "3x8 90s60kg", "errors": [0] },
-  { "in": "3x30s60kg", "errors": [0] },
-  { "in": "3x8+60kg", "errors": [0] },
-  { "in": "3x8?+", "errors": [0] },
-  { "in": "3x8 / 60kg90s", "errors": [0] },
+  {
+    "comment": "mods need whitespace between them",
+    "in": "3x8 60kg50%",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 90s60kg",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x30s60kg",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8+60kg",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8?+",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 / 60kg90s",
+    "errors": [
+      0
+    ]
+  },
   {
     "comment": "r reps, s seconds, m minutes; min is an accepted spelling",
     "in": "Run / 3x8r, 2x30s, 1x20m, 1x5min / 2m\nPlank / 1x1m 90S",
     "canonical": "Run / 3x8, 2x30s, 1x20m, 1x5m / 2m\nPlank / 1x1m 90s",
     "lines": [
-      { "name": "Run", "sets": [
-        { "target": { "min": 8, "unit": "reps" }, "rest": 120 },
-        { "target": { "min": 8, "unit": "reps" }, "rest": 120 },
-        { "target": { "min": 8, "unit": "reps" }, "rest": 120 },
-        { "target": { "min": 30, "unit": "s" }, "rest": 120 },
-        { "target": { "min": 30, "unit": "s" }, "rest": 120 },
-        { "target": { "min": 20, "unit": "min" }, "rest": 120 },
-        { "target": { "min": 5, "unit": "min" }, "rest": 120 }
-      ] },
-      { "name": "Plank", "sets": [
-        { "target": { "min": 1, "unit": "min" }, "rest": 90 }
-      ] }
+      {
+        "name": "Run",
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 30,
+              "unit": "s"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 30,
+              "unit": "s"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 20,
+              "unit": "min"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "min"
+            },
+            "rest": 120
+          }
+        ]
+      },
+      {
+        "name": "Plank",
+        "sets": [
+          {
+            "target": {
+              "min": 1,
+              "unit": "min"
+            },
+            "rest": 90
+          }
+        ]
+      }
     ]
   },
   {
     "comment": "rest in whole minutes or seconds",
     "in": "3x5 150s, 3x5 180s, 3x5 3min",
     "canonical": "3x5 150s, 3x5 3m, 3x5 3m",
-    "lines": [{ "sets": [
-      { "target": { "min": 5, "unit": "reps" }, "rest": 150 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 150 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 150 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 180 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 180 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 180 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 180 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 180 },
-      { "target": { "min": 5, "unit": "reps" }, "rest": 180 }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 150
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 150
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 150
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 180
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rest": 180
+          }
+        ]
+      }
+    ]
   },
-  { "comment": "r is only a target unit", "in": "3x8 90r", "errors": [0] },
-  { "in": "3x8rr", "errors": [0] },
+  {
+    "comment": "r is only a target unit",
+    "in": "3x8 90r",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8rr",
+    "errors": [
+      0
+    ]
+  },
   {
     "comment": "week steps: week 1 (default) takes the first step; the trailing + marks every week",
     "in": "3 x 8|6|4|2+",
     "canonical": "3x8|6|4|2+",
-    "lines": [{ "sets": [
-      { "target": { "min": 8, "unit": "reps", "amrap": true } },
-      { "target": { "min": 8, "unit": "reps", "amrap": true } },
-      { "target": { "min": 8, "unit": "reps", "amrap": true } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps",
+              "amrap": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps",
+              "amrap": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps",
+              "amrap": true
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "week steps: week 4 takes the fourth",
     "in": "3 x 8|6|4|2+",
     "week": 4,
     "canonical": "3x8|6|4|2+",
-    "lines": [{ "sets": [
-      { "target": { "min": 2, "unit": "reps", "amrap": true } },
-      { "target": { "min": 2, "unit": "reps", "amrap": true } },
-      { "target": { "min": 2, "unit": "reps", "amrap": true } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 2,
+              "unit": "reps",
+              "amrap": true
+            }
+          },
+          {
+            "target": {
+              "min": 2,
+              "unit": "reps",
+              "amrap": true
+            }
+          },
+          {
+            "target": {
+              "min": 2,
+              "unit": "reps",
+              "amrap": true
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "week steps: past the last step the last one repeats",
     "in": "3 x 8|6|4|2+",
     "week": 6,
     "canonical": "3x8|6|4|2+",
-    "lines": [{ "sets": [
-      { "target": { "min": 2, "unit": "reps", "amrap": true } },
-      { "target": { "min": 2, "unit": "reps", "amrap": true } },
-      { "target": { "min": 2, "unit": "reps", "amrap": true } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 2,
+              "unit": "reps",
+              "amrap": true
+            }
+          },
+          {
+            "target": {
+              "min": 2,
+              "unit": "reps",
+              "amrap": true
+            }
+          },
+          {
+            "target": {
+              "min": 2,
+              "unit": "reps",
+              "amrap": true
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "week steps with ranges and mods",
     "in": "4x8-12|6-10 @8 / 60kg",
     "week": 2,
     "canonical": "4x8-12|6-10 @8 / 60kg",
-    "lines": [{ "sets": [
-      { "target": { "min": 6, "max": 10, "unit": "reps" }, "rpe": { "value": 8 }, "weight": { "value": 60, "unit": "kg" } },
-      { "target": { "min": 6, "max": 10, "unit": "reps" }, "rpe": { "value": 8 }, "weight": { "value": 60, "unit": "kg" } },
-      { "target": { "min": 6, "max": 10, "unit": "reps" }, "rpe": { "value": 8 }, "weight": { "value": 60, "unit": "kg" } },
-      { "target": { "min": 6, "max": 10, "unit": "reps" }, "rpe": { "value": 8 }, "weight": { "value": 60, "unit": "kg" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 6,
+              "max": 10,
+              "unit": "reps"
+            },
+            "rpe": {
+              "value": 8
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 6,
+              "max": 10,
+              "unit": "reps"
+            },
+            "rpe": {
+              "value": 8
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 6,
+              "max": 10,
+              "unit": "reps"
+            },
+            "rpe": {
+              "value": 8
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 6,
+              "max": 10,
+              "unit": "reps"
+            },
+            "rpe": {
+              "value": 8
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "week steps: a step without a unit takes the named one",
     "in": "30|45|60s",
     "week": 2,
     "canonical": "1x30s|45s|60s",
-    "lines": [{ "sets": [
-      { "target": { "min": 45, "unit": "s" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 45,
+              "unit": "s"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "week steps: without + no week is AMRAP",
     "in": "1x8|6|4",
     "week": 3,
-    "lines": [{ "sets": [
-      { "target": { "min": 4, "unit": "reps" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 4,
+              "unit": "reps"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "week steps: + only after the last step",
     "in": "3x8+|6",
-    "errors": [0]
+    "errors": [
+      0
+    ]
   },
   {
     "comment": "week steps may not mix units",
     "in": "3x8r|6s",
-    "errors": [0]
+    "errors": [
+      0
+    ]
   },
   {
     "comment": "sets may be left out for one set; ' is minutes",
     "in": "90-150'",
     "canonical": "1x90-150m",
-    "lines": [{ "sets": [
-      { "target": { "min": 90, "max": 150, "unit": "min" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 90,
+              "max": 150,
+              "unit": "min"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "'' is seconds",
     "in": "3 x 5-10''",
     "canonical": "3x5-10s",
-    "lines": [{ "sets": [
-      { "target": { "min": 5, "max": 10, "unit": "s" } },
-      { "target": { "min": 5, "max": 10, "unit": "s" } },
-      { "target": { "min": 5, "max": 10, "unit": "s" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "max": 10,
+              "unit": "s"
+            }
+          },
+          {
+            "target": {
+              "min": 5,
+              "max": 10,
+              "unit": "s"
+            }
+          },
+          {
+            "target": {
+              "min": 5,
+              "max": 10,
+              "unit": "s"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "' and '' rest",
     "in": "3x5 100kg 2'\n1x45s 90''",
     "canonical": "3x5 100kg 2m\n1x45s 90s",
-    "lines": [{ "sets": [
-      { "target": { "min": 5, "unit": "reps" }, "weight": { "value": 100, "unit": "kg" }, "rest": 120 },
-      { "target": { "min": 5, "unit": "reps" }, "weight": { "value": 100, "unit": "kg" }, "rest": 120 },
-      { "target": { "min": 5, "unit": "reps" }, "weight": { "value": 100, "unit": "kg" }, "rest": 120 }
-    ] }, { "sets": [
-      { "target": { "min": 45, "unit": "s" }, "rest": 90 }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 100,
+              "unit": "kg"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 100,
+              "unit": "kg"
+            },
+            "rest": 120
+          },
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 100,
+              "unit": "kg"
+            },
+            "rest": 120
+          }
+        ]
+      },
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 45,
+              "unit": "s"
+            },
+            "rest": 90
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "set ranges are not workline",
     "in": "3-4 x 8-9",
-    "errors": [0]
+    "errors": [
+      0
+    ]
   },
   {
     "comment": "nested intervals are not workline",
     "in": "30-45' (4-6 x 15'' 90%)",
-    "errors": [0]
+    "errors": [
+      0
+    ]
   },
   {
     "comment": "trailing whitespace is free",
     "in": "3x8 \t\n1x5 ",
     "canonical": "3x8\n1x5",
-    "lines": [{ "sets": [
-      { "target": { "min": 8, "unit": "reps" } },
-      { "target": { "min": 8, "unit": "reps" } },
-      { "target": { "min": 8, "unit": "reps" } }
-    ] }, { "sets": [
-      { "target": { "min": 5, "unit": "reps" } }
-    ] }]
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          }
+        ]
+      },
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "trailing whitespace after mods and defaults",
     "in": "Bench Press / 1x5 @8 90s  \n3x8 / 60kg ",
     "canonical": "Bench Press / 1x5 @8 90s\n3x8 / 60kg",
-    "lines": [{ "name": "Bench Press", "sets": [
-      { "target": { "min": 5, "unit": "reps" }, "rpe": { "value": 8 }, "rest": 90 }
-    ] }, { "sets": [
-      { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" } },
-      { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" } },
-      { "target": { "min": 8, "unit": "reps" }, "weight": { "value": 60, "unit": "kg" } }
-    ] }]
+    "lines": [
+      {
+        "name": "Bench Press",
+        "sets": [
+          {
+            "target": {
+              "min": 5,
+              "unit": "reps"
+            },
+            "rpe": {
+              "value": 8
+            },
+            "rest": 90
+          }
+        ]
+      },
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 60,
+              "unit": "kg"
+            }
+          }
+        ]
+      }
+    ]
   },
   {
     "comment": "an empty defaults section is still an error",
     "in": "3x8 / ",
-    "errors": [0]
+    "errors": [
+      0
+    ]
   },
   {
     "comment": "sheet header rows and performed values round trip",
     "in": "# Exercise | Plan | Log\nBench / 3x8 => 8, 8, 6",
     "canonical": "# Exercise | Plan | Log\nBench / 3x8 => 8, 8, 6",
-    "headers": [{ "text": "Exercise | Plan | Log" }],
-    "logs": [[8, 8, 6]],
-    "lines": [{ "name": "Bench", "sets": [
-      { "target": { "min": 8, "unit": "reps" } },
-      { "target": { "min": 8, "unit": "reps" } },
-      { "target": { "min": 8, "unit": "reps" } }
-    ] }]
+    "headers": [
+      {
+        "text": "Exercise | Plan | Log"
+      }
+    ],
+    "logs": [
+      [
+        8,
+        8,
+        6
+      ]
+    ],
+    "lines": [
+      {
+        "name": "Bench",
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            }
+          }
+        ]
+      }
+    ]
   },
-  { "comment": "header text is required", "in": "#", "errors": [0] },
-  { "comment": "logs require numeric values", "in": "3x8 => 8, nope", "errors": [0] }
+  {
+    "comment": "header text is required",
+    "in": "#",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "comment": "logs require numeric values",
+    "in": "3x8 => 8, nope",
+    "errors": [
+      0
+    ]
+  },
+  {
+    "in": "3x8 +15kg",
+    "canonical": "3x8 +15kg",
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 15,
+              "unit": "kg",
+              "added": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 15,
+              "unit": "kg",
+              "added": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 15,
+              "unit": "kg",
+              "added": true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "in": "3x8 / +2.5kg",
+    "canonical": "3x8 / +2.5kg",
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 2.5,
+              "unit": "kg",
+              "added": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 2.5,
+              "unit": "kg",
+              "added": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps"
+            },
+            "weight": {
+              "value": 2.5,
+              "unit": "kg",
+              "added": true
+            }
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "in": "3x8+ +15kg",
+    "canonical": "3x8+ +15kg",
+    "lines": [
+      {
+        "sets": [
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps",
+              "amrap": true
+            },
+            "weight": {
+              "value": 15,
+              "unit": "kg",
+              "added": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps",
+              "amrap": true
+            },
+            "weight": {
+              "value": 15,
+              "unit": "kg",
+              "added": true
+            }
+          },
+          {
+            "target": {
+              "min": 8,
+              "unit": "reps",
+              "amrap": true
+            },
+            "weight": {
+              "value": 15,
+              "unit": "kg",
+              "added": true
+            }
+          }
+        ]
+      }
+    ]
+  }
 ]

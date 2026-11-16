@@ -19,6 +19,7 @@ Squat / 3x5 80% / 3m        last section applies to every group
 3x30s                       timed sets
 1x20m @7+                   20 minutes, RPE logged
 1x2km                       distance set
+Deadlift / 2x4+ / +15kg     AMRAP top set, plate added to the last weight
 3 x 8|6|4|2+                week 1: 3x8+, week 2: 3x6+, ..., week 4: 3x2+
 90-150'                     one set of 90-150 minutes
 3 x 5-10''                  seconds
@@ -41,7 +42,9 @@ only covers what the syntax cannot express. In short:
 - `STEP = N[-N][r|s|m|km]`: `r` reps (the default when omitted), `s`
   seconds, `m` minutes, `km` kilometers. `min` and `'` are accepted for `m`,
   `''` for `s`. Suffixes are written with no space before them
-- `mods` in any order: weight `60kg` / `135lb` / `?+`, percent `80%`,
+- `mods` in any order: weight `60kg` / `135lb` / `?+` / added `+15kg` (a
+  plate or dumbbell jump added to a base weight, recorded as such), percent
+  `80%`,
   rpe `@8`, rest `90s` / `2m` (`min` and `'` accepted for `m`, `''` for `s`), each optionally followed by `+` where the
   semantics below allow it
 
@@ -63,8 +66,11 @@ before a suffix.
   unit takes the unit the other steps name, and explicit units must agree
   (`30|45|60s` is seconds; `8r|6s` errors). Expanding for a week past the
   last step repeats the last step; without a week, week 1.
-- **weight**: absolute load. `+` means the lifter confirms or edits it while
-  logging. `?+` means no prescribed weight, ask for it.
+- **weight**: absolute load. `+15kg` / `+10lb` names added weight (a plate
+  jump on top of a base load, for example after an AMRAP set), stored as an
+  added weight and serialized back with the leading `+`. A trailing `+`
+  (`60kg+`) means the lifter confirms or edits it while logging. `?+` means
+  no prescribed weight, ask for it.
 - **percent**: percentage of 1RM, `0 < value <= 200`. `+` as for weight.
 - **rpe**: target RPE, `1 <= value <= 10`. `+` means the lifter logs actual RPE.
 - **rest**: rest after each set, a whole number, stored in seconds, at most 86400.

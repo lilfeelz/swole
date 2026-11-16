@@ -2,7 +2,7 @@
  * workline v1: tree-sitter syntax (grammar.js) plus semantics. See SPEC.md.
  * @typedef {'reps'|'s'|'min'|'km'} TargetUnit
  * @typedef {{min:number, max?:number, unit:TargetUnit, amrap?:true}} Target
- * @typedef {{value?:number, unit?:'kg'|'lb', ask?:true}} Weight
+ * @typedef {{value?:number, unit?:'kg'|'lb', added?:true, ask?:true}} Weight
  * @typedef {{value:number, ask?:true}} Scalar
  * @typedef {{weight?:Weight, percent?:Scalar, rpe?:Scalar, rest?:number}} Mods  rest in seconds
  * @typedef {Mods & {sets:number, target:Target, weeks?:Target[]}} Group  weeks: one target per week of a block ("8|6|4"), target is weeks[0]
@@ -239,6 +239,7 @@ function parseMods(node) {
         set('weight', {
           value,
           unit: /** @type {'kg'|'lb'} */ (field(m, 'unit').text.toLowerCase()),
+          ...(m.childForFieldName('added') ? { added: /** @type {const} */ (true) } : {}),
           ...ask,
         })
         break
@@ -370,7 +371,9 @@ function mods(m) {
   const plus = (/** @type {{ask?:true}} */ x) => (x.ask ? '+' : '')
   if (m.weight)
     out.push(
-      m.weight.value === undefined ? '?+' : `${m.weight.value}${m.weight.unit}${plus(m.weight)}`,
+      m.weight.value === undefined
+        ? '?+'
+        : `${m.weight.added ? '+' : ''}${m.weight.value}${m.weight.unit}${plus(m.weight)}`,
     )
   if (m.percent) out.push(`${m.percent.value}%${plus(m.percent)}`)
   if (m.rpe) out.push(`@${m.rpe.value}${plus(m.rpe)}`)

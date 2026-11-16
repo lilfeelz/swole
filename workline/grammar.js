@@ -81,8 +81,8 @@ export default grammar({
     _mod: ($) =>
       choice($.weight, $.ask_weight, $.percent, $.rpe, $.rest, alias($._legacy_weight, $.weight)),
 
-    weight: ($) => weight($, $._gap_num),
-    _weight_first: ($) => weight($, $.number),
+    weight: ($) => weight($, null, true),
+    _weight_first: ($) => weight($, $.number, false),
     // Legacy "@60kg" from the pre-v1 grammar.
     _legacy_weight: ($) => seq('@', field('value', $._num_imm), field('unit', unit($, /kg|lb/i))),
 
@@ -119,13 +119,31 @@ function unit($, re) {
 }
 
 /**
- * A weight, "60kg" or "60kg+".
+ * A weight, "60kg", "+15kg" (added weight) or "60kg+".
+ *
+ * In a group's mods the rule carries the gap itself: the plain shape is
+ * "ws 60kg" (whitespace glued into the number token, as with the other gap
+ * mods), the added shape is "ws +15kg" (whitespace glued into the + token).
+ * The glued forms keep "+" of an amrap target ("3x8+") and a following weight
+ * ("3x8 +15kg") unambiguous: the ask + must touch the number, the added + must
+ * touch its number on the right and whitespace on the left.
  * @param {S} $ grammar symbols
- * @param {RuleOrLiteral} num the number rule, with or without its leading gap
- * @returns {SeqRule} weight rule
+ * @param {RuleOrLiteral} num the number rule for the defaults position
+ * @param {boolean} gap true in mods position, false right after "/"
+ * @returns {Rule} weight rule
  */
-function weight($, num) {
-  return seq(field('value', num), field('unit', unit($, /kg|lb/i)), optional(field('ask', $._ask)))
+function weight($, num, gap) {
+  const tail = (value) =>
+    seq(field('value', value), field('unit', unit($, /kg|lb/i)), optional(field('ask', $._ask)))
+  if (!gap)
+    return seq(
+      optional(field('added', alias('+', $.added))),
+      tail(num),
+    )
+  return choice(
+    tail($._gap_num),
+    seq(field('added', alias(token(seq(/[ \t]+/, '+')), $.added)), tail($._num_imm)),
+  )
 }
 
 /**
