@@ -1,4 +1,8 @@
-/** Weekday names in routine order, Monday first. */
+/**
+ * Weekday names in routine order, Monday first.
+ *
+ * @type {Array<import("../../types/swole.d.ts").Weekday>}
+ */
 export const DAYS = [
   "MONDAY",
   "TUESDAY",
@@ -45,7 +49,7 @@ export function resolveDay(raw, now = new Date()) {
   const text = String(raw || "").trim();
   if (!text) return DAYS[(now.getDay() + 6) % 7];
   const first = text.toUpperCase().split(/[^A-Z]+/)[0];
-  return DAYS.includes(first) ? first : text.toUpperCase();
+  return DAYS.includes(/** @type {any} */ (first)) ? first : text.toUpperCase();
 }
 
 /**
@@ -64,7 +68,7 @@ export function parseRoutine(text) {
     if (!line || line.startsWith("#")) continue;
 
     const upper = line.toUpperCase();
-    if (DAYS.includes(upper)) {
+    if (DAYS.includes(/** @type {any} */ (upper))) {
       currentDay = upper;
       if (!blocks[currentDay]) blocks[currentDay] = [];
       continue;
@@ -264,16 +268,17 @@ export function isoWeekParts(date) {
 }
 
 /**
- * Builds the relative archive path data/log/<yy>/<ww>/<unix-ts>.txt for a session.
+ * Builds the archive path <baseDir>/<yy>/<ww>/<unix-ts>.txt for a session.
  *
  * @param {{ startAt?: Date|null }} session Validated session with startAt.
- * @returns {string} Relative archive file path.
+ * @param {string} [baseDir] Base directory prefix (default: "data/log").
+ * @returns {string} Archive file path.
  */
-export function logPathForSession(session) {
+export function logPathForSession(session, baseDir = "data/log") {
   const ref = session.startAt ? new Date(session.startAt) : new Date();
   const { yy, ww } = isoWeekParts(ref);
   const ts = Math.floor(ref.getTime() / 1000);
-  return `data/log/${yy}/${ww}/${ts}.txt`;
+  return `${baseDir}/${yy}/${ww}/${ts}.txt`;
 }
 
 /**

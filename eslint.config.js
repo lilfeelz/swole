@@ -3,7 +3,6 @@ import jsdoc from "eslint-plugin-jsdoc";
 
 export default [
   js.configs.recommended,
-  jsdoc.configs["flat/recommended"],
   {
     ignores: [
       "dist/**",
@@ -16,7 +15,8 @@ export default [
     ],
   },
   {
-    files: ["src/**/*.js", "scripts/**/*.js", "test/**/*.js"],
+    files: ["src/**/*.js", "scripts/**/*.js"],
+    plugins: { jsdoc },
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
@@ -64,6 +64,13 @@ export default [
       "jsdoc/check-param-names": "error",
       "jsdoc/check-types": "error",
       "jsdoc/valid-types": "error",
+    },
+  },
+  {
+    files: ["test/**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
     },
   },
 ];
