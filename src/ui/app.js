@@ -204,8 +204,7 @@ export function mount(api) {
       const schemeEl = row.querySelector(".scheme");
       const scheme = schemeEl ? schemeEl.textContent : "";
       const load = input ? input.value : "";
-      const lastEl = row.querySelector(".last");
-      const last = lastEl ? lastEl.textContent : "";
+      const last = input ? input.placeholder : "";
       return { name, scheme, load, last };
     });
     try {
@@ -272,7 +271,7 @@ export function mount(api) {
   }
 
   /**
-   * Builds one exercise row: name title, plan and last as reduced lines, reduced-line input.
+   * Builds one exercise row: name and plan, input hinting the last load.
    *
    * @param {{ name: string, scheme?: string, last?: string, load?: string }} e Row data.
    * @returns {string} Row markup.
@@ -284,7 +283,6 @@ export function mount(api) {
             <div>
               <div class="name">${esc(e.name)}</div>
               ${e.scheme ? `<div class="scheme">${esc(e.scheme)}</div>` : ""}
-              ${e.last ? `<div class="last">${esc(e.last)}</div>` : ""}
             </div>
             <input inputmode="text" autocomplete="off" autocapitalize="off" data-name="${esc(e.name)}" placeholder="${esc(e.last || "3x5 / 80kg")}" value="${esc(e.load || "")}">
           </div>`;

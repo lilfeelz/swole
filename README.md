@@ -2,6 +2,10 @@
 
 One workout logger with one UI and one model in JS, running on five backends. Exercise lines use [workline](workline/SPEC.md) notation: `Deadlift / 2x4 / 140kg`.
 
+<img src="docs/screenshot.png" alt="swole on a phone" width="320">
+
+Regenerate with `npm run build && npm run screenshot`.
+
 | Runtime | Store                                         | Where                          |
 | ------- | --------------------------------------------- | ------------------------------ |
 | local   | git repo, `data/`                             | `npm run serve`, CLI           |

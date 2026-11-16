@@ -9,7 +9,8 @@ test("seeds the sample routine, saves into the device repo and keeps it across r
   await page.goto("/");
   await page.locator("#day").selectOption("MONDAY");
   await expect(page.locator("#list .row .name").first()).toHaveText("Deadlift");
-  await expect(page.locator("#list .row .last")).toHaveCount(0);
+  const first = page.locator("#list .row input").first();
+  await expect(first).toHaveAttribute("placeholder", "3x5 / 80kg");
 
   const input = page.locator("#list .row input").first();
   await input.fill("2x4   150kg");
@@ -20,8 +21,6 @@ test("seeds the sample routine, saves into the device repo and keeps it across r
 
   await page.reload();
   await page.locator("#day").selectOption("MONDAY");
-  await expect(page.locator("#list .row .last").first()).toHaveText(
-    "2x4 150kg",
-  );
+  await expect(first).toHaveAttribute("placeholder", "2x4 150kg");
   expect(errors).toEqual([]);
 });

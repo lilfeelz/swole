@@ -17,7 +17,7 @@
 }
 body {
   margin: 0;
-  padding: 16px 14px 110px;
+  padding: 16px 14px 170px;
   background: var(--bg);
   color: var(--fg);
   font:
@@ -406,7 +406,6 @@ select option {
   display: flex;
   gap: 4px;
   padding: 4px;
-  margin-bottom: 14px;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -429,16 +428,12 @@ select option {
   opacity: 0.35;
   pointer-events: none;
 }
-.last {
-  font-size: 13px;
-  color: var(--cyan);
-  margin-top: 2px;
-}
 .row.invalid input {
   border-color: var(--err);
 }
 .row .err {
-  grid-column: 1 / -1;
+  grid-column: 3;
+  margin-top: -6px;
   font-size: 12px;
   color: var(--err);
 }

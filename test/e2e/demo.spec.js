@@ -26,15 +26,10 @@ test("loads Monday sample routine and last loads", async ({ page }) => {
   await expect(schemes.nth(2)).toHaveText("3x6+");
   await expect(schemes.nth(3)).toHaveText("2x6+");
 
-  const last = page.locator("#list .row .last");
-  await expect(last).toHaveText([
-    "2x4 / 140kg",
-    "3x6 / 90kg",
-    "3x6 / 15kg",
-    "2x6 / 80kg",
-  ]);
   const inputs = page.locator("#list .row input");
-  await expect(inputs.nth(0)).toHaveAttribute("placeholder", "2x4 / 140kg");
+  const hints = ["2x4 / 140kg", "3x6 / 90kg", "3x6 / 15kg", "2x6 / 80kg"];
+  for (const [i, hint] of hints.entries())
+    await expect(inputs.nth(i)).toHaveAttribute("placeholder", hint);
 });
 
 test("toggles workout timer on clock click", async ({ page }) => {
@@ -112,13 +107,10 @@ test("saves completed session and clears timer and drafts", async ({
   await expect(status).toContainText("saved 1 exercises");
   await expect(page.locator("#clock")).toHaveText("00:00:00");
   await expect(page.locator("#clock")).not.toHaveClass(/running/);
-  await expect(page.locator("#list .row .last").first()).toHaveText(
-    "2x4 / 145kg",
-  );
+  const first = page.locator("#list .row input").first();
+  await expect(first).toHaveAttribute("placeholder", "2x4 / 145kg");
   await page.reload();
-  await expect(page.locator("#list .row .last").first()).toHaveText(
-    "2x4 / 145kg",
-  );
+  await expect(first).toHaveAttribute("placeholder", "2x4 / 145kg");
 });
 
 test("opens feedback modal and triggers pre-filled GitHub issue URL", async ({

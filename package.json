@@ -18,7 +18,8 @@
     "mirror": "bash scripts/mirror.sh",
     "build:grammar": "cd workline && tree-sitter generate && tree-sitter build --wasm -o workline.wasm && cp ../node_modules/web-tree-sitter/web-tree-sitter.wasm .",
     "setup": "node src/cli.js setup",
-    "serve": "node src/cli.js serve"
+    "serve": "node src/cli.js serve",
+    "screenshot": "node scripts/screenshot.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
