@@ -12,6 +12,7 @@ export default [
       "android/**",
       "data/**",
       "sample/**",
+      "workline/**",
     ],
   },
   {
@@ -72,6 +73,7 @@ export default [
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
+      globals: { URL: "readonly" },
     },
   },
 ];

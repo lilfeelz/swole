@@ -15,7 +15,8 @@
     "format": "prettier --write .",
     "test": "node --test --experimental-test-coverage --test-coverage-include=\"src/**/*.js\" \"test/**/*.test.js\"",
     "test:e2e": "playwright test",
-    "mirror": "bash scripts/mirror.sh"
+    "mirror": "bash scripts/mirror.sh",
+    "build:grammar": "cd workline && tree-sitter generate && tree-sitter build --wasm -o workline.wasm && cp ../node_modules/web-tree-sitter/web-tree-sitter.wasm ."
   },
   "devDependencies": {
     "@playwright/test": "^1.52.0",
@@ -25,6 +26,14 @@
     "eslint-plugin-jsdoc": "^50.6.11",
     "isomorphic-git": "^1.29.0",
     "prettier": "^3.5.3",
+    "tree-sitter-cli": "0.27.1",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "web-tree-sitter": "0.27.1"
+  },
+  "allowScripts": {
+    "esbuild@0.25.12": true,
+    "tree-sitter-cli@0.27.1": true
   }
 }

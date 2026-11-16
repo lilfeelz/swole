@@ -1,0 +1,132 @@
+# workline spec, v1
+
+A text notation for prescribed and performed strength sets, one exercise per
+line. Built to live in a spreadsheet cell and stay readable there.
+Syntax is inspired by Liftosaur's Liftoscript exercise lines; nothing here is
+derived from its source.
+
+Implementations in any language must pass `test/vectors.json`. Syntax comes
+from the shared tree-sitter grammar; each language adds only the semantics below.
+
+## Examples
+
+```
+3x8                         3 sets of 8 reps
+3x8-12 60kg                 rep range, fixed weight
+Bench Press / 4x5, 1x5+ @8  named, 4x5 then one AMRAP set at RPE 8
+Squat / 3x5 80% / 3m        last section applies to every group
+1x6 70%+, 5x5 50% 90s       per-group loads and rest
+3x30s                       timed sets
+1x20m @7+                   20 minutes, RPE logged
+1x2km                       distance set
+3 x 8|6|4|2+                week 1: 3x8+, week 2: 3x6+, ..., week 4: 3x2+
+90-150'                     one set of 90-150 minutes
+3 x 5-10''                  seconds
+# Exercise | Plan | Log     sheet header; tabular headings stay in the cell
+Bench / 3x8 => 8, 8, 6      performed values for the three sets
+```
+
+## Syntax
+
+[`grammar.js`](grammar.js) (tree-sitter) is the only definition of the syntax.
+Every implementation parses with the parser generated from it, so this spec
+only covers what the syntax cannot express. In short:
+
+- `line = [name "/"] group {"," group} ["/" mods] ["=>" N {"," N}]`, one per text line
+- `header = "#" text`, a retained spreadsheet header row
+- `name` is any text before the first `/` that does not start with a digit or `#`
+- `group = [SETS x] TARGET [mods]`, `x` also `X` or `×`; without `SETS x`
+  it is one set
+- `TARGET = STEP {"|" STEP} [+]`, one step per week of a block
+- `STEP = N[-N][r|s|m|km]`: `r` reps (the default when omitted), `s`
+  seconds, `m` minutes, `km` kilometers. `min` and `'` are accepted for `m`,
+  `''` for `s`. Suffixes are written with no space before them
+- `mods` in any order: weight `60kg` / `135lb` / `?+`, percent `80%`,
+  rpe `@8`, rest `90s` / `2m` (`min` and `'` accepted for `m`, `''` for `s`), each optionally followed by `+` where the
+  semantics below allow it
+
+Mods are separated by spaces or tabs: `60kg 50%`, never `60kg50%`. Only an
+`@` form may touch the token before it (`3x8@8`, legacy `3x8@60kg`), and the
+first mod after `/` needs no space. Elsewhere whitespace is free, except
+before a suffix.
+
+## Semantics
+
+- **sets**: a whole number from 1 to 1000; 1 when left out. There are no set ranges:
+  `3-4 x 8` is an error.
+- **target**: the reps (or seconds, minutes, kilometers) per set.
+  `8-12` is a range, `min <= max`. A trailing `+` marks it as logged:
+  AMRAP for reps, "as long as possible" for time and distance.
+- **week steps**: `8|6|4|2+` is the target of week 1, 2, 3 and 4 of a block.
+  Each step has its own range; a trailing `+` marks every step (`8+|6` is an
+  error). A step without a
+  unit takes the unit the other steps name, and explicit units must agree
+  (`30|45|60s` is seconds; `8r|6s` errors). Expanding for a week past the
+  last step repeats the last step; without a week, week 1.
+- **weight**: absolute load. `+` means the lifter confirms or edits it while
+  logging. `?+` means no prescribed weight, ask for it.
+- **percent**: percentage of 1RM, `0 < value <= 200`. `+` as for weight.
+- **rpe**: target RPE, `1 <= value <= 10`. `+` means the lifter logs actual RPE.
+- **rest**: rest after each set, a whole number, stored in seconds, at most 86400.
+- **sheet headers**: a line beginning with `#` is retained as a header, with its
+  text trimmed. It may contain spreadsheet column labels separated by tabs,
+  pipes, or other ordinary text; workline does not interpret those labels.
+- **logs**: `=> N, N, ...` after a line records numeric performed values in set
+  order (for example actual reps). Values are retained and serialized; this
+  first form deliberately leaves their meaning to the sheet using them.
+- A group holds at most one of each mod kind, and not both weight and percent.
+- The trailing `/ mods` section is the line's defaults. A group's own mod wins
+  over the default of the same kind; weight and percent count as one kind.
+
+Expanding a line for a week (default 1) yields one entry per set with
+defaults applied, in order.
+
+## Errors
+
+A line that fails to parse is reported with its 0-based line index, raw text
+and a reason, and is kept verbatim on serialize. Other lines still parse.
+Reasons are free text; conformance only checks that a line errors.
+
+## Canonical form
+
+Serializing produces:
+
+- `name / ` prefix when named, name trimmed, inner whitespace collapsed
+- groups joined by `, `
+- inside a group: `SETSxTARGET` (sets always written, steps joined by `|`,
+  each with its unit), then weight or percent, then rpe, then rest,
+  separated by one space
+- targets in reps without `r`, minutes as `m`, seconds as `s` (never `'`/`''`)
+- rest as `Nm` when a whole number of minutes, else `Ns`
+- numbers without trailing zeros (`62.5`, `60`)
+- defaults as ` / mods` in the same mod order, omitted when empty
+- header rows as `# ` followed by trimmed header text
+- logs as `=>` with a space on each side, followed by comma-space separated numbers
+
+`parse(serialize(parse(x)))` must equal `parse(x)`.
+
+## Legacy input
+
+The previous grammar (`JakobMelchard/workout` `public/grammar.js`) used
+`SETSxVALUE@WEIGHT[UNIT]` with `@` meaning weight and a default unit of kg.
+v1 reads `@` as RPE. For migration:
+
+- `@<num>kg` / `@<num>lb` is accepted as weight and serializes in canonical
+  form (`3x8@60kg` becomes `3x8 60kg`).
+- `@<num>` without a unit is RPE. Values above 10 error, which flags old
+  unitless weights for manual fixing. Unitless values up to 10
+  are valid both ways, so the migration lists them instead of converting.
+- Legacy target suffixes other than `r`, `s`, `m`, `min`, `km` error. Note
+  that a legacy `m` meant meters and now means minutes.
+
+`scripts/migrate-legacy.js` applies these rules to whole cells: it parses each
+line with the legacy grammar, rewrites `@<num>[kg|lb]` as a weight (unitless
+above 10 means kg), maps legacy `r` to reps and keeps `s`, `min`, `km`, checks the
+result with `parse`, and lists every line it cannot convert for manual fixing.
+Legacy `m` is always listed, never converted. Usage is in the README.
+
+## Not in v1
+
+Program structure (days, reuse) beyond week steps, progression scripts, warmups,
+supersets, tags and notes. Tags and notes live in their own spreadsheet
+columns until a consumer needs them inline.
