@@ -41,7 +41,10 @@ export function createKvStore({ kv }) {
     },
 
     async append(session) {
-      const id = String(session.endAt ? session.endAt.getTime() : Date.now());
+      // Same id as the git log file: start time in unix seconds, bumped on a clash.
+      let n = Math.floor(new Date(session.startAt).getTime() / 1000);
+      while (await kv.get(`log:${n}`)) n++;
+      const id = String(n);
       const key = `log:${id}`;
       const serialized = {
         day: session.day,

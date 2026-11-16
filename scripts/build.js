@@ -131,20 +131,6 @@ async function build() {
     path.join(gasDist, "appsscript.json"),
   );
   console.log("built dist/gas");
-
-  // 5. Cloudflare Workers bundle (dist/cf/worker.js)
-  const cfDist = path.join(distDir, "cf");
-  await fs.mkdir(cfDist, { recursive: true });
-
-  await esbuild.build({
-    entryPoints: [path.join(rootDir, "src", "runtimes", "cf", "worker.js")],
-    bundle: true,
-    format: "esm",
-    target: "es2022",
-    outfile: path.join(cfDist, "worker.js"),
-    minify: true,
-  });
-  console.log("✔ Built dist/cf/worker.js");
 }
 
 build().catch((err) => {
