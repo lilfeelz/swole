@@ -306,6 +306,7 @@ export function mount(api) {
       }
     }
     r.classList.toggle("invalid", Boolean(reason));
+    if (!reason) r.classList.remove("show-err");
     if (reason) {
       const el = document.createElement("div");
       el.className = "err";
@@ -638,6 +639,10 @@ export function mount(api) {
   $("list").addEventListener("click", (evt) => {
     const target = /** @type {HTMLElement} */ (evt.target);
     const btn = target.closest(".del-btn");
+    // Tapping an invalid exercise shows or hides why its line does not parse.
+    const invalid = target.closest(".row.invalid");
+    if (!btn && invalid && !target.closest("input"))
+      invalid.classList.toggle("show-err");
     if (!btn) return;
     const row = btn.closest(".row");
     if (row) {

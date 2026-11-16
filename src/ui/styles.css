@@ -159,7 +159,7 @@ select option {
   margin-top: 2px;
 }
 .row input {
-  height: 54px;
+  height: 42px;
   font-size: 16px;
   padding: 0 14px;
   text-align: right;
@@ -432,8 +432,16 @@ select option {
   border-color: var(--err);
 }
 .row .err {
+  display: none;
   grid-column: 3;
   margin-top: -6px;
   font-size: 12px;
   color: var(--err);
+}
+.row.show-err .err {
+  display: block;
+}
+.row.invalid .name {
+  color: var(--err);
+  cursor: pointer;
 }

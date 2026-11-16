@@ -19,6 +19,7 @@ await inputs.nth(0).fill("2x4 / 145kg");
 await inputs.nth(1).fill("heavy");
 await inputs.nth(2).click();
 await page.locator("#list .row.invalid").waitFor();
+await page.locator("#list .row.invalid .name").click();
 if (!(await page.locator("#save").isDisabled()))
   throw new Error("save not disabled");
 await page.waitForTimeout(300); // let the 0.15s opacity transition finish

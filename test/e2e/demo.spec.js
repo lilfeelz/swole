@@ -194,6 +194,8 @@ test("an invalid line shows the reason and blocks save until fixed", async ({
   await input.fill("heavy");
   await input.blur();
   await expect(row).toHaveClass(/invalid/);
+  await expect(row.locator(".err")).toBeHidden();
+  await row.locator(".name").click();
   await expect(row.locator(".err")).toContainText("unexpected");
   await expect(page.locator("#save")).toBeDisabled();
 
