@@ -75,7 +75,8 @@ async function build() {
   await fs.mkdir(distDir, { recursive: true });
 
   await web("local");
-  const webDist = await web(
+  const apkDist = await web("apk");
+  await web(
     "demo",
     '<div class="demo-banner">Interactive Demo &bull; <a href="https://github.com/lilfeelz/swole" target="_blank" rel="noopener">swole on GitHub</a></div>',
   );
@@ -90,7 +91,8 @@ async function build() {
     "assets",
   );
   await fs.mkdir(androidAssets, { recursive: true });
-  await fs.cp(webDist, androidAssets, { recursive: true });
+  await fs.rm(androidAssets, { recursive: true, force: true });
+  await fs.cp(apkDist, androidAssets, { recursive: true });
   console.log("✔ Synced android/app/src/main/assets");
 
   // Apps Script: Code.js (server) plus one Index.html with the client inlined, since it serves no other files.

@@ -4,57 +4,39 @@ import android.annotation.SuppressLint
 import android.os.Bundle
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
-import android.webkit.WebSettings
 import android.webkit.WebView
+import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
-import androidx.appcompat.app.AppCompatActivity
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
 
-class MainActivity : AppCompatActivity() {
-
-    private lateinit var webView: WebView
-
+// Thin shell: serves the bundled UI from app assets over https://appassets.androidplatform.net.
+class MainActivity : ComponentActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        webView = WebView(this)
+        val webView = WebView(this)
         setContentView(webView)
 
-        val assetLoader = WebViewAssetLoader.Builder()
+        val assets = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
             .build()
-
-        webView.settings.apply {
-            javaScriptEnabled = true
-            domStorageEnabled = true
-            databaseEnabled = true
-            cacheMode = WebSettings.LOAD_DEFAULT
-            allowFileAccess = false
-            allowContentAccess = false
-        }
-
+        webView.settings.javaScriptEnabled = true
+        webView.settings.domStorageEnabled = true
+        webView.settings.allowFileAccess = false
+        webView.settings.allowContentAccess = false
         webView.webViewClient = object : WebViewClientCompat() {
             override fun shouldInterceptRequest(
                 view: WebView,
-                request: WebResourceRequest
-            ): WebResourceResponse? {
-                return assetLoader.shouldInterceptRequest(request.url)
-            }
+                request: WebResourceRequest,
+            ): WebResourceResponse? = assets.shouldInterceptRequest(request.url)
         }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (webView.canGoBack()) {
-                    webView.goBack()
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
-                }
+                if (webView.canGoBack()) webView.goBack() else finish()
             }
         })
-
         webView.loadUrl("https://appassets.androidplatform.net/assets/index.html")
     }
 }

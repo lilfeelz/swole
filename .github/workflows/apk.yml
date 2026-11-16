@@ -1,0 +1,48 @@
+name: apk
+
+# Debug-signed until a release key is set up. A v* tag attaches the APK to a release.
+# Runners ship JDK 17 and the Android SDK, so no setup actions are needed for them.
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      [
+        "android/**",
+        "src/**",
+        "workline/**",
+        "scripts/build.js",
+        "package-lock.json",
+      ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - name: assemble
+        working-directory: android
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_17_X64 }}
+        run: ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.7.0
+        with:
+          name: swole-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+      - name: release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" android/app/build/outputs/apk/debug/app-debug.apk --generate-notes --repo "$GITHUB_REPOSITORY"
