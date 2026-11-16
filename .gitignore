@@ -6,3 +6,4 @@
 .DS_Store
 .clasprc.json
 /data/*
+/android/app/src/main/assets/

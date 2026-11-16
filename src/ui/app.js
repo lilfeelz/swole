@@ -1,533 +1,733 @@
-import { createBrowserStore } from "../stores/browser.js";
-import { createService } from "../core/service.js";
+import { ready, canon } from "../workline.js";
 
 /**
- * Queries a DOM element by ID.
+ * Mounts the UI on a transport.
  *
- * @param {string} id Element ID.
- * @returns {any} Matching element.
+ * @param {import("../../types/swole.d.ts").Api} api Runtime transport.
  */
-const $ = (id) => document.getElementById(id);
+export function mount(api) {
+  /**
+   * Queries a DOM element by ID.
+   *
+   * @param {string} id Element ID.
+   * @returns {any} Matching element.
+   */
+  const $ = (id) => document.getElementById(id);
 
-let api = null;
-let timerRunning = false;
-let accumulatedSeconds = 0;
-let lastStartedAt = 0;
-let timerInterval = null;
-let workoutStartAt = null;
-let busy = false;
+  let timerRunning = false;
+  let accumulatedSeconds = 0;
+  let lastStartedAt = null;
+  let timerInterval = null;
+  let startedAt = null;
+  let busy = false;
 
-/**
- * Formats seconds count as HH:MM:SS.
- *
- * @param {number} totalSeconds Total seconds elapsed.
- * @returns {string} Formatted clock string.
- */
-function formatClock(totalSeconds) {
-  const h = Math.floor(totalSeconds / 3600);
-  const m = Math.floor((totalSeconds % 3600) / 60);
-  const s = totalSeconds % 60;
-  return (
-    String(h).padStart(2, "0") +
-    ":" +
-    String(m).padStart(2, "0") +
-    ":" +
-    String(s).padStart(2, "0")
-  );
-}
-
-/**
- * Calculates total elapsed workout seconds.
- *
- * @returns {number} Elapsed seconds.
- */
-function getElapsedSeconds() {
-  if (timerRunning && lastStartedAt) {
-    return accumulatedSeconds + Math.floor((Date.now() - lastStartedAt) / 1000);
+  /**
+   * Formats a second count as HH:MM:SS.
+   *
+   * @param {number} seconds Total elapsed seconds.
+   * @returns {string} Clock string.
+   */
+  function formatClock(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return (
+      String(h).padStart(2, "0") +
+      ":" +
+      String(m).padStart(2, "0") +
+      ":" +
+      String(s).padStart(2, "0")
+    );
   }
-  return accumulatedSeconds;
-}
 
-/**
- * Refreshes the clock element text.
- */
-function updateClock() {
-  const clockEl = $("clock");
-  if (clockEl) {
-    clockEl.textContent = formatClock(getElapsedSeconds());
-  }
-}
-
-/**
- * Sets clock element visual active state.
- *
- * @param {boolean} running Whether timer is running.
- */
-function setTimerState(running) {
-  const clockEl = $("clock");
-  if (clockEl) {
-    clockEl.classList.toggle("running", running);
-  }
-}
-
-/**
- * Saves current timer state to local storage.
- */
-function saveTimerState() {
-  try {
-    const data = {
-      workoutStartAt: workoutStartAt ? workoutStartAt.toISOString() : null,
-      lastStartedAt,
-      accumulatedSeconds,
-      timerRunning,
-    };
-    localStorage.setItem("swole_timer", JSON.stringify(data));
-  } catch {
-    // Ignore storage errors
-  }
-}
-
-/**
- * Restores timer state from local storage.
- */
-function restoreTimerState() {
-  try {
-    const raw = localStorage.getItem("swole_timer");
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    if (!data) return;
-    accumulatedSeconds = Number(data.accumulatedSeconds) || 0;
-    workoutStartAt = data.workoutStartAt ? new Date(data.workoutStartAt) : null;
-    timerRunning = Boolean(data.timerRunning);
-    if (timerRunning && data.lastStartedAt) {
-      lastStartedAt = Number(data.lastStartedAt);
-      setTimerState(true);
-      updateClock();
-      if (!timerInterval) timerInterval = setInterval(updateClock, 1000);
-    } else {
-      lastStartedAt = 0;
-      setTimerState(false);
-      updateClock();
+  /**
+   * Calculates total elapsed session seconds using wall clock.
+   *
+   * @returns {number} Elapsed seconds.
+   */
+  function getElapsedSeconds() {
+    if (timerRunning && lastStartedAt) {
+      return (
+        accumulatedSeconds + Math.floor((Date.now() - lastStartedAt) / 1000)
+      );
     }
-  } catch {
-    // Ignore corrupt storage
+    return accumulatedSeconds;
   }
-}
 
-/**
- * Starts workout timer.
- */
-function startTimer() {
-  if (timerRunning) return;
-  timerRunning = true;
-  lastStartedAt = Date.now();
-  if (!workoutStartAt) workoutStartAt = new Date();
-  setTimerState(true);
-  updateClock();
-  if (timerInterval) clearInterval(timerInterval);
-  timerInterval = setInterval(updateClock, 1000);
-  saveTimerState();
-}
-
-/**
- * Pauses workout timer.
- */
-function pauseTimer() {
-  if (!timerRunning) return;
-  accumulatedSeconds += Math.floor((Date.now() - lastStartedAt) / 1000);
-  timerRunning = false;
-  lastStartedAt = 0;
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
+  /**
+   * Updates the clock element with current elapsed time.
+   *
+   * @returns {void}
+   */
+  function updateClock() {
+    $("clock").textContent = formatClock(getElapsedSeconds());
   }
-  setTimerState(false);
-  updateClock();
-  saveTimerState();
-}
 
-/**
- * Resets workout timer to zero.
- */
-function resetTimer() {
-  timerRunning = false;
-  accumulatedSeconds = 0;
-  lastStartedAt = 0;
-  workoutStartAt = null;
-  if (timerInterval) {
-    clearInterval(timerInterval);
-    timerInterval = null;
+  /**
+   * Updates the clock visual state between running and paused.
+   *
+   * @param {boolean} running Whether timer is running.
+   * @returns {void}
+   */
+  function setTimerState(running) {
+    $("clock").classList.toggle("running", running);
   }
-  setTimerState(false);
-  updateClock();
-  localStorage.removeItem("swole_timer");
-}
 
-/**
- * Displays a transient status message in the footer.
- *
- * @param {string} text Message content.
- * @param {"ok" | "err" | "info"} [kind] Visual status style.
- */
-function showStatus(text, kind = "info") {
-  const statusEl = $("status");
-  if (!statusEl) return;
-  statusEl.textContent = text;
-  statusEl.className = `status ${kind}`;
-}
-
-/**
- * Initializes the API layer depending on environment.
- *
- * @returns {Promise<import("../../types/swole.d.ts").Api>} Initialized Api interface.
- */
-async function initApi() {
-  const win = /** @type {any} */ (window);
-  if (win.swoleApi) return win.swoleApi;
-
-  // Check if server /api endpoint exists
-  try {
-    const probe = await fetch("/api/load", {
-      method: "HEAD",
-      cache: "no-store",
-    });
-    if (probe.ok) {
-      return {
-        async load(day) {
-          const res = await fetch(`/api/load${day ? `?day=${day}` : ""}`);
-          return res.json();
-        },
-        async start(day) {
-          const res = await fetch("/api/start", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ day }),
-          });
-          return res.json();
-        },
-        async stop(session) {
-          const res = await fetch("/api/stop", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session }),
-          });
-          return res.json();
-        },
-        async save(session) {
-          const res = await fetch("/api/save", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ session }),
-          });
-          return res.json();
-        },
-        async track(event) {
-          await fetch("/api/track", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ event }),
-          });
-        },
+  /**
+   * Saves current timer session state to localStorage.
+   *
+   * @returns {void}
+   */
+  function saveSessionState() {
+    try {
+      const data = {
+        day: $("day").value,
+        startedAt: startedAt ? startedAt.toISOString() : null,
+        lastStartedAt,
+        accumulatedSeconds,
+        timerRunning,
       };
+      localStorage.setItem("swole_active_session", JSON.stringify(data));
+    } catch {
+      // ignore storage errors
     }
-  } catch {
-    // Server endpoint not reachable
   }
 
-  // Fallback to local BrowserStore demo mode
-  const banner = $("demo-banner");
-  if (banner) banner.style.display = "block";
-  const store = createBrowserStore();
-  return createService({ store });
-}
-
-/**
- * Renders the exercise cards list for the active day.
- *
- * @param {Array<{ name: string, scheme: string, last?: string }>} program Exercise definitions.
- * @param {string} day Active weekday name.
- */
-function renderProgram(program, day) {
-  const listEl = $("list");
-  if (!listEl) return;
-  listEl.innerHTML = "";
-
-  const draftKey = `swole_draft_${day}`;
-  let drafts = {};
-  try {
-    drafts = JSON.parse(localStorage.getItem(draftKey) || "{}");
-  } catch {
-    drafts = {};
-  }
-
-  for (const ex of program) {
-    const row = document.createElement("div");
-    row.className = "row";
-    row.dataset.name = ex.name;
-
-    const nameLine = document.createElement("div");
-    nameLine.className = "name-line";
-
-    const nameSpan = document.createElement("span");
-    nameSpan.className = "name";
-    nameSpan.textContent = ex.name;
-
-    const schemeSpan = document.createElement("span");
-    schemeSpan.className = "scheme";
-    schemeSpan.textContent = ex.scheme || "";
-
-    nameLine.appendChild(nameSpan);
-    nameLine.appendChild(schemeSpan);
-
-    const lastLine = document.createElement("div");
-    lastLine.className = "last-line";
-    if (ex.last) {
-      lastLine.innerHTML = `last: <span>${ex.last}</span>`;
-    }
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.placeholder = ex.last ? `e.g. ${ex.last}` : "load (e.g. 100kg x 5)";
-    input.value = drafts[ex.name] || "";
-    if (input.value) row.classList.add("filled");
-
-    input.addEventListener("focus", () => {
-      row.classList.add("focused");
-      if (!timerRunning) startTimer();
-    });
-
-    input.addEventListener("blur", () => {
-      row.classList.remove("focused");
-    });
-
-    input.addEventListener("input", () => {
-      drafts[ex.name] = input.value;
-      try {
-        localStorage.setItem(draftKey, JSON.stringify(drafts));
-      } catch {
-        // Ignore storage errors
-      }
-      row.classList.toggle("filled", Boolean(input.value.trim()));
-    });
-
-    row.appendChild(nameLine);
-    row.appendChild(lastLine);
-    row.appendChild(input);
-    listEl.appendChild(row);
-  }
-}
-
-/**
- * Loads session view and populates navigation and inputs.
- *
- * @param {string} [requestedDay] Selected weekday name.
- */
-async function loadView(requestedDay) {
-  if (busy) return;
-  busy = true;
-  showStatus("Loading...");
-
-  try {
-    const payload = await api.load(requestedDay);
-    const daySelect = $("day");
-    if (daySelect) {
-      daySelect.innerHTML = "";
-      for (const d of payload.days) {
-        const opt = document.createElement("option");
-        opt.value = d;
-        opt.textContent = d;
-        if (d === payload.day) opt.selected = true;
-        daySelect.appendChild(opt);
-      }
-    }
-
-    // Configure 3-tab segmented control links
-    const tabRoutine = $("tab-routine");
-    if (tabRoutine) {
-      if (payload.navLinks?.routine) {
-        tabRoutine.href = payload.navLinks.routine;
-        tabRoutine.classList.remove("disabled");
+  /**
+   * Restores timer session state from localStorage.
+   *
+   * @returns {void}
+   */
+  function restoreSessionState() {
+    try {
+      const raw = localStorage.getItem("swole_active_session");
+      if (!raw) return;
+      const data = JSON.parse(raw);
+      if (!data) return;
+      accumulatedSeconds = Number(data.accumulatedSeconds) || 0;
+      startedAt = data.startedAt ? new Date(data.startedAt) : null;
+      timerRunning = Boolean(data.timerRunning);
+      if (timerRunning && data.lastStartedAt) {
+        lastStartedAt = Number(data.lastStartedAt);
+        setTimerState(true);
+        updateClock();
+        if (!timerInterval) timerInterval = setInterval(updateClock, 1000);
       } else {
-        tabRoutine.removeAttribute("href");
-        tabRoutine.classList.add("disabled");
+        lastStartedAt = null;
+        setTimerState(false);
+        updateClock();
       }
+    } catch {
+      // ignore corrupted state
     }
-
-    const tabLog = $("tab-log");
-    if (tabLog) {
-      if (payload.navLinks?.log) {
-        tabLog.href = payload.navLinks.log;
-        tabLog.classList.remove("disabled");
-      } else {
-        tabLog.removeAttribute("href");
-        tabLog.classList.add("disabled");
-      }
-    }
-
-    renderProgram(payload.program, payload.day);
-    showStatus("");
-  } catch (err) {
-    showStatus(`Failed to load: ${err.message}`, "err");
-  } finally {
-    busy = false;
   }
-}
 
-/**
- * Collects input values and saves the workout session.
- */
-async function saveWorkout() {
-  if (busy) return;
-  busy = true;
-  showStatus("Saving session...");
+  /**
+   * Starts the session timer.
+   *
+   * @returns {void}
+   */
+  function startTimer() {
+    if (timerRunning) return;
+    timerRunning = true;
+    const now = Date.now();
+    if (!startedAt) startedAt = new Date(now);
+    lastStartedAt = now;
+    setTimerState(true);
+    updateClock();
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(updateClock, 1000);
+    saveSessionState();
+  }
 
-  try {
+  /**
+   * Pauses the session timer.
+   *
+   * @returns {void}
+   */
+  function pauseTimer() {
+    if (!timerRunning) return;
+    timerRunning = false;
+    if (lastStartedAt) {
+      accumulatedSeconds += Math.floor((Date.now() - lastStartedAt) / 1000);
+      lastStartedAt = null;
+    }
+    setTimerState(false);
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    updateClock();
+    saveSessionState();
+  }
+
+  /**
+   * Resets the timer state and storage.
+   *
+   * @returns {void}
+   */
+  function resetTimer() {
+    timerRunning = false;
+    accumulatedSeconds = 0;
+    lastStartedAt = null;
+    startedAt = null;
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    setTimerState(false);
+    $("clock").textContent = "00:00:00";
+    try {
+      localStorage.removeItem("swole_active_session");
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Toggles the timer between running and paused.
+   *
+   * @returns {void}
+   */
+  function toggleTimer() {
+    if (timerRunning) pauseTimer();
+    else startTimer();
+  }
+
+  /**
+   * Saves entered loads and rows for the active day.
+   *
+   * @returns {void}
+   */
+  function saveDraft() {
     const day = $("day").value;
-    const listEl = $("list");
-    const rows = listEl.querySelectorAll(".row");
-    const entries = [];
-
-    for (const row of rows) {
-      const name = row.dataset.name;
+    if (!day) return;
+    const rows = [...document.querySelectorAll("#list .row")].map((row) => {
       const input = row.querySelector("input");
-      const load = input ? input.value.trim() : "";
-      if (load && name) {
-        entries.push({ name, load });
+      const name = input ? input.dataset.name : "";
+      const schemeEl = row.querySelector(".scheme");
+      const scheme = schemeEl ? schemeEl.textContent : "";
+      const load = input ? input.value : "";
+      const lastEl = row.querySelector(".last");
+      const last = lastEl ? lastEl.textContent : "";
+      return { name, scheme, load, last };
+    });
+    try {
+      localStorage.setItem("swole_draft_" + day, JSON.stringify(rows));
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Loads draft rows for a day.
+   *
+   * @param {string} day Weekday name.
+   * @returns {Array<object>|null} Saved rows or null.
+   */
+  function loadDraft(day) {
+    try {
+      const raw = localStorage.getItem("swole_draft_" + day);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Clears draft rows for a day.
+   *
+   * @param {string} day Weekday name.
+   * @returns {void}
+   */
+  function clearDraft(day) {
+    try {
+      localStorage.removeItem("swole_draft_" + day);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Escapes text for use in HTML markup.
+   *
+   * @param {string} value Raw text.
+   * @returns {string} Escaped text.
+   */
+  function esc(value) {
+    return String(value).replace(
+      /[&<>"]/g,
+      (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+    );
+  }
+
+  /**
+   * Shows a status message under the list.
+   *
+   * @param {string} message Status text.
+   * @param {string} [kind] Optional CSS modifier ("ok" or "err").
+   * @returns {void}
+   */
+  function status(message, kind = "") {
+    const el = $("status");
+    el.textContent = message || "";
+    el.className = "status" + (kind ? " " + kind : "");
+  }
+
+  /**
+   * Builds one exercise row: name title, plan and last as reduced lines, reduced-line input.
+   *
+   * @param {{ name: string, scheme?: string, last?: string, load?: string }} e Row data.
+   * @returns {string} Row markup.
+   */
+  function row(e) {
+    return `
+          <div class="row">
+            <button type="button" class="del-btn" title="Remove" aria-label="Remove">×</button>
+            <div>
+              <div class="name">${esc(e.name)}</div>
+              ${e.scheme ? `<div class="scheme">${esc(e.scheme)}</div>` : ""}
+              ${e.last ? `<div class="last">${esc(e.last)}</div>` : ""}
+            </div>
+            <input inputmode="text" autocomplete="off" autocapitalize="off" data-name="${esc(e.name)}" placeholder="${esc(e.last || "3x5 / 80kg")}" value="${esc(e.load || "")}">
+          </div>`;
+  }
+
+  /**
+   * Validates a row's input; a valid line is replaced by its canonical form.
+   *
+   * @param {HTMLElement} r Row element.
+   * @returns {boolean} Whether the input is empty or valid.
+   */
+  function check(r) {
+    const input = /** @type {HTMLInputElement} */ (r.querySelector("input"));
+    r.querySelector(".err")?.remove();
+    let reason = "";
+    if (input.value.trim()) {
+      try {
+        input.value = canon(input.value);
+      } catch (err) {
+        reason = err instanceof Error ? err.message : String(err);
       }
     }
+    r.classList.toggle("invalid", Boolean(reason));
+    if (reason) {
+      const el = document.createElement("div");
+      el.className = "err";
+      el.textContent = reason;
+      r.appendChild(el);
+    }
+    $("save").disabled = Boolean($("list").querySelector(".row.invalid"));
+    return !reason;
+  }
 
-    if (entries.length === 0) {
-      showStatus("Please record at least one exercise load", "err");
-      busy = false;
+  /**
+   * Points a Routine or Log tab at the backend's editor, or disables it.
+   *
+   * @param {HTMLAnchorElement} tab Tab link.
+   * @param {string} [url] Editor URL.
+   */
+  function link(tab, url) {
+    if (url) tab.href = url;
+    else tab.removeAttribute("href");
+    tab.classList.toggle("disabled", !url);
+  }
+
+  /**
+   * Renders the day title and exercise rows.
+   *
+   * @param {import("../../types/swole.d.ts").ApiPayload} data Session payload for the selected day.
+   * @returns {void}
+   */
+  function render(data) {
+    if (data && data.day) {
+      try {
+        localStorage.setItem("swole_day_" + data.day, JSON.stringify(data));
+      } catch {
+        // ignore storage quota errors
+      }
+    }
+    let opt = $("day").querySelector(`option[value="${data.day}"]`);
+    if (!opt) {
+      opt = document.createElement("option");
+      opt.value = data.day;
+      opt.textContent = data.day;
+      $("day").appendChild(opt);
+    }
+    $("day").value = data.day;
+    $("title").textContent = data.day;
+    link($("tab-routine"), data.navLinks?.routine);
+    link($("tab-log"), data.navLinks?.log);
+
+    const draft = loadDraft(data.day);
+    if (draft && draft.length) {
+      $("list").innerHTML = draft.map(row).join("");
       return;
     }
 
-    const endAt = new Date();
-    const startAt =
-      workoutStartAt || new Date(endAt.getTime() - getElapsedSeconds() * 1000);
-
-    const result = await api.save({
-      day,
-      startAt,
-      endAt,
-      entries,
-    });
-
-    if (result.ok) {
-      showStatus(`Saved ${result.saved} exercises!`, "ok");
-      localStorage.removeItem(`swole_draft_${day}`);
-      resetTimer();
-      await loadView(day);
-    } else {
-      showStatus("Save returned non-ok result", "err");
+    const program = data.program || [];
+    if (!program.length) {
+      $("list").innerHTML =
+        '<div class="empty">Rest Day. Pick a weekday to load a list.</div>';
+      return;
     }
-  } catch (err) {
-    showStatus(`Save failed: ${err.message}`, "err");
-  } finally {
-    busy = false;
+    $("list").innerHTML = program.map(row).join("");
   }
+
+  /**
+   * Opens the add exercise modal.
+   *
+   * @returns {void}
+   */
+  function openModal() {
+    $("modal-input").value = "";
+    $("modal").style.display = "flex";
+    setTimeout(() => $("modal-input").focus(), 50);
+  }
+
+  /**
+   * Closes the add exercise modal.
+   *
+   * @returns {void}
+   */
+  function closeModal() {
+    $("modal").style.display = "none";
+    $("modal-input").value = "";
+  }
+
+  /**
+   * Appends the new exercise from the modal to the active list.
+   *
+   * @returns {void}
+   */
+  function confirmAdd() {
+    const name = $("modal-input").value.trim();
+    if (!name) return;
+    const empty = $("list").querySelector(".empty");
+    if (empty) $("list").innerHTML = "";
+    $("list").insertAdjacentHTML("beforeend", row({ name }));
+    closeModal();
+    saveDraft();
+    const input = $("list").lastElementChild.querySelector("input");
+    if (input) input.focus();
+  }
+
+  /** @type {"bug"|"feature"} */
+  let feedbackType = "bug";
+
+  /**
+   * Sets the active feedback type (bug or feature).
+   *
+   * @param {"bug"|"feature"} type Selected type.
+   * @returns {void}
+   */
+  function setFeedbackType(type) {
+    feedbackType = type;
+    $("type-bug").classList.toggle("active", type === "bug");
+    $("type-feature").classList.toggle("active", type === "feature");
+    $("feedback-input").placeholder =
+      type === "bug"
+        ? "Describe the unexpected behavior…"
+        : "Describe the feature you would like…";
+  }
+
+  /**
+   * Opens the feedback modal, optionally pre-filled.
+   *
+   * @param {string} [initialText] Initial text for textarea.
+   * @param {"bug"|"feature"} [type] Feedback type.
+   * @returns {void}
+   */
+  function openFeedbackModal(initialText = "", type = "bug") {
+    setFeedbackType(type);
+    $("feedback-input").value = initialText || "";
+    $("feedback-modal").style.display = "flex";
+    setTimeout(() => $("feedback-input").focus(), 50);
+  }
+
+  /**
+   * Closes the feedback modal.
+   *
+   * @returns {void}
+   */
+  function closeFeedbackModal() {
+    $("feedback-modal").style.display = "none";
+    $("feedback-input").value = "";
+  }
+
+  /**
+   * Constructs a pre-filled GitHub issue URL with context and diagnostics.
+   *
+   * @param {"bug"|"feature"} type Type of issue.
+   * @param {string} message Description.
+   * @param {string} [repoUrl] Repository base URL.
+   * @returns {string} Encoded URL.
+   */
+  function buildGitHubIssueUrl(
+    type,
+    message,
+    repoUrl = "https://github.com/lilfeelz/swole",
+  ) {
+    const isBug = type === "bug";
+    const label = isBug ? "bug" : "enhancement";
+    const titlePrefix = isBug ? "[Bug]: " : "[Feature]: ";
+    const cleanMsg = (message || "").trim();
+    const title = cleanMsg
+      ? titlePrefix + cleanMsg.split("\n")[0].slice(0, 60)
+      : titlePrefix + (isBug ? "Unexpected issue" : "Feature proposal");
+
+    let body = "";
+    if (isBug) {
+      body = [
+        "### Description",
+        cleanMsg || "(No description provided)",
+        "",
+        "### Diagnostics",
+        "- Date: " + new Date().toISOString(),
+        "- Selected Day: " + $("day").value,
+        "- Timer: " +
+          formatClock(getElapsedSeconds()) +
+          " (running: " +
+          timerRunning +
+          ")",
+        "- Screen: " +
+          window.innerWidth +
+          "x" +
+          window.innerHeight +
+          " (dpr: " +
+          (window.devicePixelRatio || 1) +
+          ")",
+        "- User Agent: " + navigator.userAgent,
+        "- Last Status: " + ($("status").textContent || "(none)"),
+      ].join("\n");
+    } else {
+      body = [
+        "### Proposal",
+        cleanMsg || "(No proposal provided)",
+        "",
+        "### Context",
+        "Current workout day: " + $("day").value,
+      ].join("\n");
+    }
+
+    const base = repoUrl.replace(/\/+$/, "") + "/issues/new";
+    const params = new URLSearchParams({
+      title,
+      labels: label,
+      body,
+    });
+    return base + "?" + params.toString();
+  }
+
+  /**
+   * Submits feedback to GitHub issues or local API.
+   *
+   * @param {boolean} [saveToGit] Whether to write to data/feedback.txt via local API.
+   * @returns {Promise<void>}
+   */
+  async function submitFeedback(saveToGit = false) {
+    const msg = $("feedback-input").value.trim();
+    if (saveToGit) {
+      if (!msg) return;
+      try {
+        await api.track({
+          category: "feedback",
+          action: feedbackType,
+          label: $("day").value,
+          data: { message: msg },
+        });
+        closeFeedbackModal();
+        status("feedback recorded", "ok");
+      } catch (err) {
+        status(err instanceof Error ? err.message : String(err), "err");
+      }
+      return;
+    }
+
+    const url = buildGitHubIssueUrl(feedbackType, msg);
+    window.open(url, "_blank", "noopener");
+    closeFeedbackModal();
+  }
+
+  /**
+   * Loads a day's program from the configured backend.
+   *
+   * @param {string} day Weekday name or empty for default day.
+   * @returns {Promise<void>} Resolves once rendered.
+   */
+  async function load(day) {
+    const draft = day ? loadDraft(day) : null;
+    if (!draft || !draft.length) {
+      $("list").innerHTML = '<div class="empty">loading…</div>';
+    }
+    try {
+      const data = await api.load(day);
+      render(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      const draftNow = day ? loadDraft(day) : null;
+      if (!draftNow || !draftNow.length) {
+        $("list").innerHTML = `<div class="empty">${esc(msg)}</div>`;
+      }
+      status(msg, "err");
+    }
+  }
+
+  /**
+   * Collects entered loads and saves the workout session.
+   *
+   * @returns {Promise<void>} Resolves when save completes.
+   */
+  async function save() {
+    if (busy) return;
+    await ready;
+    const rows = [...document.querySelectorAll("#list .row")];
+    if (!rows.map((r) => check(/** @type {HTMLElement} */ (r))).every(Boolean))
+      return status("Fix the marked lines", "err");
+    const entries = [...document.querySelectorAll("#list .row")]
+      .map((row) => {
+        const input = row.querySelector("input");
+        return {
+          name: input ? input.dataset.name : "",
+          load: input ? input.value.trim() : "",
+        };
+      })
+      .filter((entry) => entry.name && entry.load);
+    if (!entries.length) return status("Enter at least one load", "err");
+
+    const sessionStart = startedAt || new Date(Date.now() - 1000);
+    const sessionEnd = new Date();
+
+    busy = true;
+    $("save").disabled = true;
+    status("saving…");
+    try {
+      // ISO strings: google.script.run rejects Date arguments; the service parses them.
+      const res = await api.save(
+        /** @type {any} */ ({
+          day: $("day").value,
+          startAt: sessionStart.toISOString(),
+          endAt: sessionEnd.toISOString(),
+          entries,
+        }),
+      );
+      busy = false;
+      $("save").disabled = false;
+      if (!res.saved) return status("Nothing saved", "err");
+      const totalSecs = getElapsedSeconds();
+      clearDraft($("day").value);
+      resetTimer();
+      status(
+        "saved " + res.saved + " exercises (" + formatClock(totalSecs) + ")",
+        "ok",
+      );
+      document.querySelectorAll("#list input").forEach((input) => {
+        /** @type {HTMLInputElement} */ (input).value = "";
+      });
+      await load($("day").value);
+    } catch (err) {
+      busy = false;
+      $("save").disabled = false;
+      status(err instanceof Error ? err.message : String(err), "err");
+    }
+  }
+
+  $("list").addEventListener("input", saveDraft);
+  $("list").addEventListener("focusout", async (evt) => {
+    const r = /** @type {HTMLElement} */ (evt.target).closest(".row");
+    if (!r) return;
+    await ready;
+    check(/** @type {HTMLElement} */ (r));
+    saveDraft();
+  });
+  $("list").addEventListener("click", (evt) => {
+    const target = /** @type {HTMLElement} */ (evt.target);
+    const btn = target.closest(".del-btn");
+    if (!btn) return;
+    const row = btn.closest(".row");
+    if (row) {
+      row.remove();
+      saveDraft();
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      saveSessionState();
+      saveDraft();
+    } else {
+      updateClock();
+    }
+  });
+  window.addEventListener("pagehide", () => {
+    saveSessionState();
+    saveDraft();
+  });
+  window.addEventListener("beforeunload", () => {
+    saveSessionState();
+    saveDraft();
+  });
+
+  $("add-btn").addEventListener("click", openModal);
+  $("modal-cancel").addEventListener("click", closeModal);
+  $("modal-confirm").addEventListener("click", confirmAdd);
+  $("modal").addEventListener("click", (evt) => {
+    if (evt.target === $("modal")) closeModal();
+  });
+  $("modal-input").addEventListener("keydown", (evt) => {
+    if (evt.key === "Enter") confirmAdd();
+    if (evt.key === "Escape") closeModal();
+  });
+
+  $("feedback-file").style.display = "";
+  $("feedback-btn").addEventListener("click", () => openFeedbackModal());
+  $("feedback-cancel").addEventListener("click", closeFeedbackModal);
+  $("type-bug").addEventListener("click", () => setFeedbackType("bug"));
+  $("type-feature").addEventListener("click", () => setFeedbackType("feature"));
+  $("feedback-submit").addEventListener("click", () => submitFeedback(false));
+  $("feedback-file").addEventListener("click", () => submitFeedback(true));
+  $("feedback-modal").addEventListener("click", (evt) => {
+    if (evt.target === $("feedback-modal")) closeFeedbackModal();
+  });
+  $("status").addEventListener("click", () => {
+    if ($("status").classList.contains("err")) {
+      const errText = $("status").textContent || "";
+      openFeedbackModal("Error: " + errText, "bug");
+    }
+  });
+
+  $("clock").addEventListener("click", toggleTimer);
+  $("day").addEventListener("change", () => {
+    const picked = $("day").value;
+    const cached = localStorage.getItem("swole_day_" + picked);
+    if (cached) {
+      try {
+        render(JSON.parse(cached));
+      } catch {
+        // ignore corrupted cache
+      }
+    }
+    load(picked);
+  });
+  $("save").addEventListener("click", save);
+
+  restoreSessionState();
+
+  const activeSession = (() => {
+    try {
+      return JSON.parse(localStorage.getItem("swole_active_session") || "null");
+    } catch {
+      return null;
+    }
+  })();
+
+  const targetDay = (activeSession && activeSession.day) || "";
+  if (targetDay) {
+    const cachedTarget = localStorage.getItem("swole_day_" + targetDay);
+    if (cachedTarget) {
+      try {
+        render(JSON.parse(cachedTarget));
+      } catch {
+        // ignore corrupted cache
+      }
+    }
+  }
+  load(targetDay);
 }
-
-// Setup Event Listeners
-window.addEventListener("DOMContentLoaded", async () => {
-  api = await initApi();
-  restoreTimerState();
-
-  const clockEl = $("clock");
-  if (clockEl) {
-    clockEl.addEventListener("click", () => {
-      if (timerRunning) {
-        pauseTimer();
-      } else {
-        startTimer();
-      }
-    });
-  }
-
-  const daySelect = $("day");
-  if (daySelect) {
-    daySelect.addEventListener("change", () => {
-      loadView(daySelect.value);
-    });
-  }
-
-  const saveBtn = $("save");
-  if (saveBtn) {
-    saveBtn.addEventListener("click", saveWorkout);
-  }
-
-  const modal = $("modal");
-  const addBtn = $("add-btn");
-  const modalClose = $("modal-close");
-  const modalAdd = $("modal-add");
-
-  if (addBtn && modal) {
-    addBtn.addEventListener("click", () => {
-      modal.style.display = "flex";
-      const nameInput = $("custom-name");
-      if (nameInput) nameInput.focus();
-    });
-  }
-
-  if (modalClose && modal) {
-    modalClose.addEventListener("click", () => {
-      modal.style.display = "none";
-    });
-  }
-
-  if (modalAdd && modal) {
-    modalAdd.addEventListener("click", () => {
-      const nameInput = $("custom-name");
-      const schemeInput = $("custom-scheme");
-      const name = nameInput ? nameInput.value.trim() : "";
-      const scheme = schemeInput ? schemeInput.value.trim() : "";
-
-      if (!name) return;
-
-      const listEl = $("list");
-      if (listEl) {
-        const row = document.createElement("div");
-        row.className = "row";
-        row.dataset.name = name;
-
-        const nameLine = document.createElement("div");
-        nameLine.className = "name-line";
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "name";
-        nameSpan.textContent = name;
-        const schemeSpan = document.createElement("span");
-        schemeSpan.className = "scheme";
-        schemeSpan.textContent = scheme;
-        nameLine.appendChild(nameSpan);
-        nameLine.appendChild(schemeSpan);
-
-        const lastLine = document.createElement("div");
-        lastLine.className = "last-line";
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.placeholder = "load (e.g. 100kg x 5)";
-
-        input.addEventListener("focus", () => {
-          row.classList.add("focused");
-          if (!timerRunning) startTimer();
-        });
-        input.addEventListener("blur", () => row.classList.remove("focused"));
-        input.addEventListener("input", () => {
-          row.classList.toggle("filled", Boolean(input.value.trim()));
-        });
-
-        row.appendChild(nameLine);
-        row.appendChild(lastLine);
-        row.appendChild(input);
-        listEl.appendChild(row);
-      }
-
-      if (nameInput) nameInput.value = "";
-      if (schemeInput) schemeInput.value = "";
-      modal.style.display = "none";
-    });
-  }
-
-  await loadView();
-});

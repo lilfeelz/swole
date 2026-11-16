@@ -5,6 +5,67 @@ import esbuild from "esbuild";
 const rootDir = process.cwd();
 const distDir = path.join(rootDir, "dist");
 
+const b64 = async (f) =>
+  (await fs.readFile(path.join(rootDir, "workline", f))).toString("base64");
+const logs = (
+  await fs.readdir(path.join(rootDir, "sample", "log"), { recursive: true })
+)
+  .filter((f) => f.endsWith(".txt"))
+  .sort();
+/** Constants every bundle gets: both wasm files and the public sample. */
+const define = {
+  WORKLINE_WASM: JSON.stringify(await b64("workline.wasm")),
+  TS_WASM: JSON.stringify(await b64("web-tree-sitter.wasm")),
+  SWOLE_SAMPLE: JSON.stringify({
+    routine: await fs.readFile(
+      path.join(rootDir, "sample", "routine.txt"),
+      "utf8",
+    ),
+    logs: await Promise.all(
+      logs.map((f) =>
+        fs.readFile(path.join(rootDir, "sample", "log", f), "utf8"),
+      ),
+    ),
+  }),
+};
+
+/**
+ * Bundles the UI for one browser runtime into dist/<name>.
+ *
+ * @param {string} name Runtime name under src/runtimes.
+ * @param {string} [banner] HTML replacing the DEMO_BANNER marker.
+ * @returns {Promise<string>} Output directory.
+ */
+async function web(name, banner = "") {
+  const out = path.join(distDir, name);
+  await fs.mkdir(out, { recursive: true });
+  await esbuild.build({
+    entryPoints: [path.join(rootDir, "src", "runtimes", name, "main.js")],
+    bundle: true,
+    format: "iife",
+    target: "es2022",
+    define,
+    // workline's import.meta fallback is unused: bundles always pass wasm bytes.
+    logOverride: { "empty-import-meta": "silent" },
+    outfile: path.join(out, "app.js"),
+    minify: true,
+  });
+  const html = await fs.readFile(
+    path.join(rootDir, "src", "ui", "index.html"),
+    "utf8",
+  );
+  await fs.writeFile(
+    path.join(out, "index.html"),
+    html.replace("<!-- DEMO_BANNER -->", banner),
+  );
+  await fs.copyFile(
+    path.join(rootDir, "src", "ui", "styles.css"),
+    path.join(out, "styles.css"),
+  );
+  console.log(`built dist/${name}`);
+  return out;
+}
+
 /**
  * Builds all swole distribution artifacts.
  */
@@ -13,28 +74,10 @@ async function build() {
 
   await fs.mkdir(distDir, { recursive: true });
 
-  // 1. Web bundle (dist/web)
-  const webDist = path.join(distDir, "web");
-  await fs.mkdir(webDist, { recursive: true });
-
-  await esbuild.build({
-    entryPoints: [path.join(rootDir, "src", "ui", "app.js")],
-    bundle: true,
-    format: "esm",
-    target: "es2022",
-    outfile: path.join(webDist, "app.js"),
-    minify: true,
-  });
-
-  await fs.copyFile(
-    path.join(rootDir, "src", "ui", "index.html"),
-    path.join(webDist, "index.html"),
+  const webDist = await web(
+    "demo",
+    '<div class="demo-banner">Interactive Demo &bull; <a href="https://github.com/lilfeelz/swole" target="_blank" rel="noopener">swole on GitHub</a></div>',
   );
-  await fs.copyFile(
-    path.join(rootDir, "src", "ui", "styles.css"),
-    path.join(webDist, "styles.css"),
-  );
-  console.log("✔ Built dist/web");
 
   // 2. Android assets
   const androidAssets = path.join(

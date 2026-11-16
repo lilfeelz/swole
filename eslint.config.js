@@ -1,5 +1,6 @@
 import js from "@eslint/js";
 import jsdoc from "eslint-plugin-jsdoc";
+import globals from "globals";
 
 export default [
   js.configs.recommended,
@@ -22,25 +23,13 @@ export default [
       ecmaVersion: 2022,
       sourceType: "module",
       globals: {
-        document: "readonly",
-        window: "readonly",
-        localStorage: "readonly",
-        console: "readonly",
-        process: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
-        setInterval: "readonly",
-        clearInterval: "readonly",
-        fetch: "readonly",
-        Response: "readonly",
-        Request: "readonly",
-        Headers: "readonly",
+        ...globals.browser,
+        ...globals.node,
         SpreadsheetApp: "readonly",
         Session: "readonly",
         Utilities: "readonly",
         HtmlService: "readonly",
         google: "readonly",
-        URL: "readonly",
       },
     },
     rules: {
@@ -69,11 +58,11 @@ export default [
     },
   },
   {
-    files: ["test/**/*.js"],
+    files: ["test/**/*.js", "*.config.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "module",
-      globals: { URL: "readonly" },
+      globals: { ...globals.browser, ...globals.node },
     },
   },
 ];

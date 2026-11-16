@@ -23,14 +23,16 @@ Barbell Row / 3x6-8`;
  * @param {Storage | { getItem: (k: string) => string | null, setItem: (k: string, v: string) => void, removeItem: (k: string) => void }} [options.storage] Storage backend.
  * @param {string} [options.prefix] Key prefix.
  * @param {string} [options.initialRoutine] Initial routine text seed.
+ * @param {Session[]} [options.initialSessions] Log seed used until the first save.
  * @returns {Store} Browser store instance.
  */
 export function createBrowserStore({
   storage = typeof localStorage !== "undefined"
     ? localStorage
     : /** @type {any} */ (null),
-  prefix = "swole:",
+  prefix = "swole_demo_",
   initialRoutine = DEFAULT_ROUTINE,
+  initialSessions = [],
 } = {}) {
   // In-memory fallback if storage is unavailable
   const mem = new Map();
@@ -47,8 +49,8 @@ export function createBrowserStore({
     },
 
     async sessions() {
-      const raw = backend.getItem(`${prefix}sessions`);
-      if (!raw) return [];
+      const raw = backend.getItem(`${prefix}log`);
+      if (!raw) return [...initialSessions];
       try {
         const parsed = JSON.parse(raw);
         if (!Array.isArray(parsed)) return [];
@@ -67,7 +69,7 @@ export function createBrowserStore({
       const id = String(session.endAt ? session.endAt.getTime() : Date.now());
       current.push(session);
       backend.setItem(
-        `${prefix}sessions`,
+        `${prefix}log`,
         JSON.stringify(
           current.map((s) => ({
             day: s.day,
