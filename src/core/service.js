@@ -31,17 +31,85 @@ export function createService({
   telemetry = createTelemetry(),
   navLinks = {},
 }) {
+  /**
+   * Wraps a service call to record its name, duration and outcome.
+   *
+   * @param {string} name Call name.
+   * @param {(...a: any[]) => Promise<any>} fn Implementation.
+   * @returns {(...a: any[]) => Promise<any>} Timed call.
+   */
+  const timed =
+    (name, fn) =>
+    async (...args) => {
+      const t0 = Date.now();
+      const done = (data) =>
+        telemetry.track({
+          category: "api",
+          action: name,
+          data: { ms: Date.now() - t0, ...data },
+        });
+      try {
+        const out = await fn(...args);
+        await done({ ok: true });
+        return out;
+      } catch (e) {
+        await done({ ok: false, error: String(e?.message ?? e) });
+        throw e;
+      }
+    };
+
+  /**
+   * Runs a lifecycle hook; a failing hook is reported, never thrown.
+   *
+   * @param {string} name Hook name.
+   * @param {any} ctx Hook payload.
+   * @returns {Promise<void>} Resolves after all handlers ran or one failed.
+   */
+  const fire = async (name, ctx) => {
+    try {
+      await hooks.emit(name, ctx);
+      await telemetry.track({
+        category: "hook",
+        action: name,
+        data: { ok: true },
+      });
+    } catch (e) {
+      await telemetry.track({
+        category: "hook",
+        action: name,
+        data: { ok: false, error: String(e?.message ?? e) },
+      });
+    }
+  };
+
+  /**
+   * Stamps the end, drops entries without a load and validates.
+   *
+   * @param {Session} session Session from the client.
+   * @returns {Session} Finished session.
+   */
+  const finish = (session) => {
+    const out = {
+      ...session,
+      startAt: session.startAt && new Date(session.startAt),
+      endAt: new Date(session.endAt || Date.now()),
+      entries: (session.entries || []).filter((e) => e?.load?.trim()),
+    };
+    const { ok, errors } = validateSession(out);
+    if (!ok) throw new Error(errors.join("; "));
+    return out;
+  };
+
   return {
-    async load(day) {
+    load: timed("load", async (day) => {
       const [routine, sessions, activeSession] = await Promise.all([
         store.routine(),
         store.sessions(),
-        store.getActive ? store.getActive() : Promise.resolve(null),
+        store.getActive ? store.getActive() : null,
       ]);
 
       const days = Object.keys(routine);
       const selectedDay = resolveDay(day);
-      const todayWeekday = DAYS[(new Date().getDay() + 6) % 7];
       const effectiveDay = days.includes(selectedDay)
         ? selectedDay
         : days[0] || selectedDay;
@@ -54,99 +122,41 @@ export function createService({
 
       return {
         day: effectiveDay,
-        today: todayWeekday,
+        today: DAYS[(new Date().getDay() + 6) % 7],
         days: days.length > 0 ? days : [...DAYS],
         program,
         activeSession,
         navLinks,
       };
-    },
+    }),
 
-    async start(day) {
-      const selectedDay = resolveDay(day);
+    start: timed("start", async (day) => {
       /** @type {Session} */
       const session = {
-        day: selectedDay,
+        day: resolveDay(day),
         startAt: new Date(),
         entries: [],
       };
-
-      if (store.setActive) {
-        await store.setActive(session);
-      }
-
-      await hooks.emit("post-start", session);
-      await telemetry.track({
-        category: "session",
-        action: "start",
-        label: selectedDay,
-        data: { startAt: session.startAt.toISOString() },
-      });
-
+      if (store.setActive) await store.setActive(session);
+      await fire("post-start", session);
       return session;
-    },
+    }),
 
-    async stop(session) {
-      const stopped = {
-        ...session,
-        endAt: session.endAt || new Date(),
-      };
-
-      if (store.setActive) {
-        await store.setActive(stopped);
-      }
-
-      await hooks.emit("post-stop", stopped);
-      await telemetry.track({
-        category: "session",
-        action: "stop",
-        label: stopped.day,
-        data: {
-          startAt: stopped.startAt ? stopped.startAt.toISOString() : undefined,
-          endAt: stopped.endAt.toISOString(),
-          durationMs:
-            stopped.startAt instanceof Date
-              ? stopped.endAt.getTime() - stopped.startAt.getTime()
-              : 0,
-        },
-      });
-
+    stop: timed("stop", async (session) => {
+      const stopped = finish(session);
+      if (store.setActive) await store.setActive(stopped);
+      await fire("post-stop", stopped);
       return stopped;
-    },
+    }),
 
-    async save(session) {
-      validateSession(session);
-      const completed = {
-        ...session,
-        endAt: session.endAt || new Date(),
-      };
+    save: timed("save", async (session) => {
+      const done = finish(session);
+      const id = await store.append(done);
+      if (store.setActive) await store.setActive(null);
+      await fire("post-save", { session: done, id });
+      return { ok: true, saved: done.entries.length, id };
+    }),
 
-      const id = await store.append(completed);
-
-      if (store.setActive) {
-        await store.setActive(null);
-      }
-
-      await hooks.emit("post-save", { session: completed, id });
-      await telemetry.track({
-        category: "session",
-        action: "save",
-        label: completed.day,
-        data: {
-          id,
-          count: completed.entries.length,
-        },
-      });
-
-      return {
-        ok: true,
-        saved: completed.entries.length,
-        id,
-      };
-    },
-
-    async track(event) {
-      await telemetry.track(event);
-    },
+    track: (event) => telemetry.track(event),
   };
 }

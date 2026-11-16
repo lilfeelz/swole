@@ -29,7 +29,7 @@ export function testStoreContract(name, createStore) {
       day: firstDay,
       startAt: new Date(Date.now() - 3600000),
       endAt: new Date(),
-      entries: [{ name: "Squat", load: "100kg x 5" }],
+      entries: [{ name: "Squat", load: "1x5 / 100kg" }],
     };
 
     const id = await store.append(newSession);
