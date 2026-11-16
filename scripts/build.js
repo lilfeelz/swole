@@ -74,6 +74,7 @@ async function build() {
 
   await fs.mkdir(distDir, { recursive: true });
 
+  await web("local");
   const webDist = await web(
     "demo",
     '<div class="demo-banner">Interactive Demo &bull; <a href="https://github.com/lilfeelz/swole" target="_blank" rel="noopener">swole on GitHub</a></div>',
@@ -142,19 +143,6 @@ function apiSave(session) { return SwoleGas.apiSave(session); }
 
   await fs.writeFile(path.join(gasDist, "Index.html"), inlinedGasHtml, "utf8");
   console.log("✔ Built dist/gas");
-
-  // 4. CLI executable (dist/cli.js)
-  await esbuild.build({
-    entryPoints: [path.join(rootDir, "src", "cli.js")],
-    bundle: true,
-    platform: "node",
-    format: "esm",
-    target: "node22",
-    banner: { js: "#!/usr/bin/env node" },
-    outfile: path.join(distDir, "cli.js"),
-  });
-  await fs.chmod(path.join(distDir, "cli.js"), 0o755);
-  console.log("✔ Built dist/cli.js");
 
   // 5. Cloudflare Workers bundle (dist/cf/worker.js)
   const cfDist = path.join(distDir, "cf");

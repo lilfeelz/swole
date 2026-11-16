@@ -1,328 +1,382 @@
 #!/usr/bin/env node
 import fs from "node:fs/promises";
+import { readFileSync } from "node:fs";
 import http from "node:http";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
-import {
-  parseSession,
-  validateSession,
-  formatSession,
-  logPathForSession,
-  resolveDay,
-} from "./core/model.js";
+import { execFileSync, spawnSync } from "node:child_process";
 import { createGitStore } from "./stores/git.js";
 import { createService } from "./core/service.js";
+import { createTelemetry, consoleSink, jsonlSink } from "./core/telemetry.js";
+import { handler } from "./core/http.js";
+import { DAYS, key, parseSession, validateSession } from "./core/model.js";
+import { ready } from "./workline.js";
+import { parseLine } from "../workline/index.js";
 
-/**
- * Validates a session file path.
- *
- * @param {string} filePath File path to check.
- * @returns {Promise<boolean>} True if valid.
- */
-async function validateSessionFile(filePath) {
+const root = (() => {
   try {
-    const text = await fs.readFile(filePath, "utf8");
-    const session = parseSession(text);
-    const { ok, errors } = validateSession(session);
-    if (!ok) {
-      console.error(`Validation error in ${filePath}:`, errors.join(", "));
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error(`Error reading ${filePath}:`, err.message);
-    return false;
-  }
-}
-
-/**
- * Installs git hooks into .git/hooks.
- *
- * @param {string} rootDir Repository root.
- */
-async function installHooks(rootDir) {
-  const hooksDir = path.join(rootDir, ".git", "hooks");
-  await fs.mkdir(hooksDir, { recursive: true });
-
-  const preCommitPath = path.join(hooksDir, "pre-commit");
-  const preCommitScript = `#!/bin/sh\nnode src/cli.js hook-pre-commit\n`;
-  await fs.writeFile(preCommitPath, preCommitScript, { mode: 0o755 });
-
-  const prePushPath = path.join(hooksDir, "pre-push");
-  const prePushScript = `#!/bin/sh\nnode src/cli.js hook-pre-push "$@"\n`;
-  await fs.writeFile(prePushPath, prePushScript, { mode: 0o755 });
-
-  console.log("Git hooks installed in .git/hooks/");
-}
-
-/**
- * Pre-commit hook handler.
- *
- * @param {string} rootDir Repository root.
- */
-async function hookPreCommit(rootDir) {
-  const sessionPath = path.join(rootDir, "data", "session.txt");
-  try {
-    await fs.access(sessionPath);
-    const ok = await validateSessionFile(sessionPath);
-    if (!ok) process.exit(1);
+    return execFileSync("git", ["rev-parse", "--show-toplevel"], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
   } catch {
-    // No active session file, continue
+    return process.cwd();
   }
-}
+})();
+const data = path.join(root, "data");
+const git = (args, env = {}) =>
+  execFileSync("git", args, {
+    cwd: root,
+    encoding: "utf8",
+    env: { ...process.env, ...env },
+  }).trimEnd();
+const telemetry = createTelemetry([
+  consoleSink(),
+  jsonlSink(path.join(data, "telemetry.jsonl"), fs),
+]);
 
 /**
- * Pre-push hook handler guarding against pushing private data to public remotes.
+ * Checks every exercise line of a routine, session or log file against workline.
  *
- * @param {string[]} args Hook CLI arguments.
+ * @param {string} file Name used in messages.
+ * @param {string} text File contents.
+ * @returns {string[]} One "file:line: reason" per bad line.
  */
-async function hookPrePush(args) {
-  const remote = args[0] || "";
-  const remoteUrl = args[1] || "";
-
-  const isPublicGitHub =
-    remote.includes("github") ||
-    remoteUrl.includes("github.com") ||
-    remoteUrl.includes("github-lilfeelz");
-
-  if (isPublicGitHub) {
-    // Check if data/ or .clasp.json is tracked in commits being pushed
+function lint(file, text) {
+  const errs = [];
+  text.split(/\r?\n/).forEach((raw, i) => {
+    const line = raw.trim();
+    if (!line || line.startsWith("#") || /^(DAY|START|END):/i.test(line))
+      return;
+    if (DAYS.includes(/** @type {any} */ (line.toUpperCase()))) return;
     try {
-      const gitDiff = execFileSync("git", ["diff", "--name-only", "HEAD~1"], {
-        encoding: "utf8",
-      });
-      if (gitDiff.includes("data/") || gitDiff.includes(".clasp.json")) {
-        console.error(
-          "BLOCKED: Attempting to push private data/ or .clasp.json directly to GitHub!",
-        );
-        console.error(
-          "Use `bash scripts/mirror.sh` to filter private data before pushing to public remotes.",
-        );
-        process.exit(1);
-      }
-    } catch {
-      // Git diff failed, continue safely
+      if (!parseLine(line).name) throw new Error("missing exercise name");
+    } catch (e) {
+      errs.push(`${file}:${i + 1}: ${e.message}`);
     }
-  }
+  });
+  return errs;
 }
 
 /**
- * Starts a local HTTP server for the web interface.
+ * Throws when a session's entries are not valid worklines.
  *
- * @param {number} port HTTP port.
- * @param {string} rootDir Repository root.
+ * @param {import("../types/swole.d.ts").Session} s Session to check.
  */
-async function serve(port = 3000, rootDir = process.cwd()) {
-  const dataDir = path.join(rootDir, "data");
-  const store = createGitStore({ fs, dir: dataDir });
-  const service = createService({ store });
+const assertEntries = (s) => {
+  const errs = lint(
+    "session",
+    (s.entries || [])
+      .filter((e) => e.load?.trim())
+      .map((e) => `${e.name} / ${e.load}`)
+      .join("\n"),
+  );
+  if (errs.length) throw new Error(errs.join("; "));
+};
 
-  const uiDir = path.join(rootDir, "src", "ui");
-
-  const server = http.createServer(async (req, res) => {
-    const url = new URL(req.url || "/", `http://${req.headers.host}`);
-
-    // API Routes
-    if (
-      url.pathname === "/api/load" &&
-      (req.method === "GET" || req.method === "HEAD")
-    ) {
-      if (req.method === "HEAD") {
-        res.writeHead(200);
-        res.end();
-        return;
-      }
-      const day = url.searchParams.get("day") || undefined;
-      const data = await service.load(day);
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify(data));
-      return;
-    }
-
-    if (url.pathname === "/api/start" && req.method === "POST") {
-      let body = "";
-      req.on("data", (chunk) => (body += chunk));
-      req.on("end", async () => {
-        try {
-          const { day } = JSON.parse(body || "{}");
-          const session = await service.start(day);
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify(session));
-        } catch (err) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
-      return;
-    }
-
-    if (url.pathname === "/api/stop" && req.method === "POST") {
-      let body = "";
-      req.on("data", (chunk) => (body += chunk));
-      req.on("end", async () => {
-        try {
-          const { session } = JSON.parse(body || "{}");
-          const stopped = await service.stop(session);
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify(stopped));
-        } catch (err) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
-      return;
-    }
-
-    if (url.pathname === "/api/save" && req.method === "POST") {
-      let body = "";
-      req.on("data", (chunk) => (body += chunk));
-      req.on("end", async () => {
-        try {
-          const { session } = JSON.parse(body || "{}");
-          // Rehydrate dates
-          session.startAt = new Date(session.startAt);
-          if (session.endAt) session.endAt = new Date(session.endAt);
-          const result = await service.save(session);
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify(result));
-        } catch (err) {
-          res.writeHead(400, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ error: err.message }));
-        }
-      });
-      return;
-    }
-
-    // Static Files
-    let filePath = path.join(
-      uiDir,
-      url.pathname === "/" ? "index.html" : url.pathname,
+/**
+ * Forgejo links for the Routine and Log tabs, derived from the origin remote.
+ *
+ * @returns {{ routine?: string, log?: string }} Links, empty without a parsable origin.
+ */
+function navLinks() {
+  try {
+    const url = git(["remote", "get-url", "origin"]);
+    const m = url.match(
+      /^(?:https?:\/\/|ssh:\/\/)?(?:[^@/]+@)?([^:/]+)(?::\d+)?[:/](.+?)(?:\.git)?$/,
     );
-    // Fallback to sample or root for module imports
-    if (
-      url.pathname.startsWith("/stores/") ||
-      url.pathname.startsWith("/core/")
-    ) {
-      filePath = path.join(rootDir, "src", url.pathname);
-    }
-
-    try {
-      const stat = await fs.stat(filePath);
-      if (stat.isFile()) {
-        const ext = path.extname(filePath);
-        const types = {
-          ".html": "text/html",
-          ".css": "text/css",
-          ".js": "application/javascript",
-          ".json": "application/json",
-          ".svg": "image/svg+xml",
-        };
-        const content = await fs.readFile(filePath);
-        res.writeHead(200, { "Content-Type": types[ext] || "text/plain" });
-        res.end(content);
-        return;
-      }
-    } catch {
-      // Not found
-    }
-
-    res.writeHead(404, { "Content-Type": "text/plain" });
-    res.end("Not Found");
-  });
-
-  server.listen(port, () => {
-    console.log(`Swole server running at http://localhost:${port}`);
-  });
-}
-
-/**
- * Main CLI entry point.
- */
-async function main() {
-  const [, , cmd, ...rest] = process.argv;
-  const rootDir = process.cwd();
-
-  switch (cmd) {
-    case "install-hooks":
-      await installHooks(rootDir);
-      break;
-
-    case "hook-pre-commit":
-      await hookPreCommit(rootDir);
-      break;
-
-    case "hook-pre-push":
-      await hookPrePush(rest);
-      break;
-
-    case "start": {
-      const day = resolveDay(rest[0] || "");
-      const sessionPath = path.join(rootDir, "data", "session.txt");
-      const session = {
-        day,
-        startAt: new Date(),
-        entries: [],
-      };
-      await fs.writeFile(sessionPath, formatSession(session), "utf8");
-      console.log(
-        `Started session for ${day} at ${session.startAt.toISOString()}`,
-      );
-      break;
-    }
-
-    case "stop": {
-      const sessionPath = path.join(rootDir, "data", "session.txt");
-      const text = await fs.readFile(sessionPath, "utf8");
-      const session = parseSession(text);
-      session.endAt = new Date();
-      await fs.writeFile(sessionPath, formatSession(session), "utf8");
-      console.log(
-        `Stopped session for ${session.day} at ${session.endAt.toISOString()}`,
-      );
-      break;
-    }
-
-    case "save": {
-      const sessionPath = path.join(rootDir, "data", "session.txt");
-      const text = await fs.readFile(sessionPath, "utf8");
-      const session = parseSession(text);
-      session.endAt = session.endAt || new Date();
-      const { ok, errors } = validateSession(session);
-      if (!ok) {
-        console.error("Session validation failed:", errors.join(", "));
-        process.exit(1);
-      }
-      const logDir = path.join(rootDir, "data", "log");
-      const targetPath = logPathForSession(session, logDir);
-      await fs.mkdir(path.dirname(targetPath), { recursive: true });
-      await fs.writeFile(targetPath, formatSession(session), "utf8");
-      await fs.unlink(sessionPath);
-      console.log(`Saved session to ${targetPath}`);
-      break;
-    }
-
-    case "serve": {
-      const port = Number(rest[0]) || 3000;
-      await serve(port, rootDir);
-      break;
-    }
-
-    default:
-      console.log(`Usage: swole <command>
-Commands:
-  serve [port]       Run local workout server (default: 3000)
-  start [day]        Start a workout session
-  stop               Record stop timestamp
-  save               Archive active session to data/log/
-  install-hooks      Install pre-commit and pre-push git hooks
-`);
-      break;
+    if (!m) return {};
+    const base = `https://${m[1]}/${m[2]}/src/branch/${git(["branch", "--show-current"])}/data`;
+    return { routine: `${base}/routine.txt`, log: `${base}/log` };
+  } catch {
+    return {};
   }
 }
 
-if (process.argv[1] && process.argv[1].endsWith("cli.js")) {
-  main().catch((err) => {
-    console.error(err);
-    process.exit(1);
+/**
+ * Service over data/, committing each change; hooks fire from the service, so git hooks skip these commits.
+ *
+ * @returns {import("../types/swole.d.ts").Api} Local service.
+ */
+const service = () => {
+  const api = createService({
+    store: createGitStore({
+      fs,
+      dir: data,
+      commit: async (message) => {
+        git(["add", "-A", "--", "data"]);
+        if (
+          spawnSync("git", ["diff", "--cached", "--quiet"], { cwd: root })
+            .status
+        )
+          git(["commit", "-q", "-m", message], { SWOLE_SKIP_HOOK: "1" });
+      },
+      push: async () => {
+        if (git(["remote"])) git(["push", "-q"]);
+      },
+    }),
+    telemetry,
+    navLinks: navLinks(),
   });
+  return {
+    ...api,
+    stop: async (s) => (assertEntries(s), api.stop(s)),
+    save: async (s) => (assertEntries(s), api.save(s)),
+  };
+};
+
+/**
+ * Reads data/session.txt or fails.
+ *
+ * @returns {Promise<import("../types/swole.d.ts").Session>} Active session.
+ */
+async function active() {
+  const file = path.join(data, "session.txt");
+  const text = await fs.readFile(file, "utf8").catch(() => {
+    throw new Error("no data/session.txt; run start first");
+  });
+  return parseSession(text);
 }
+
+/**
+ * Serves the local UI bundle and the api on one port.
+ *
+ * @param {number} port Port.
+ * @param {string} host Bind address.
+ */
+function serve(port, host) {
+  const dist = path.join(root, "dist", "local");
+  const api = handler(service());
+  const types = {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "text/javascript",
+  };
+  http
+    .createServer(async (req, res) => {
+      const chunks = [];
+      for await (const c of req) chunks.push(c);
+      const url = `http://${req.headers.host}${req.url}`;
+      const out = await api(
+        new Request(url, {
+          method: req.method,
+          headers: { "Content-Type": "application/json" },
+          body: req.method === "POST" ? Buffer.concat(chunks) : undefined,
+        }),
+      );
+      if (out) {
+        res.writeHead(out.status, { "Content-Type": "application/json" });
+        return res.end(await out.text());
+      }
+      const name = new URL(url).pathname.replace(/^\/$/, "/index.html");
+      const file = path.join(dist, path.normalize(name));
+      try {
+        if (!file.startsWith(dist + path.sep)) throw new Error("outside dist");
+        const body = await fs.readFile(file);
+        res.writeHead(200, {
+          "Content-Type": types[path.extname(file)] || "text/plain",
+        });
+        res.end(body);
+      } catch {
+        res.writeHead(404).end("not found");
+      }
+    })
+    .listen(port, host, () =>
+      console.log(`swole at http://${host}:${port} (run npm run build first)`),
+    );
+}
+
+/**
+ * Prints session counts, average duration and top exercises from data/log.
+ *
+ * @returns {Promise<void>} Resolves when printed.
+ */
+async function stats() {
+  const sessions = await createGitStore({ fs, dir: data }).sessions();
+  const byDay = {};
+  const ex = {};
+  const mins = [];
+  for (const s of sessions) {
+    byDay[s.day] = (byDay[s.day] || 0) + 1;
+    const ms =
+      s.endAt && s.startAt ? s.endAt.getTime() - s.startAt.getTime() : 0;
+    if (ms > 0 && ms < 864e5) mins.push(ms / 6e4);
+    for (const e of s.entries) {
+      const k = (ex[key(e.name)] ||= { name: e.name, count: 0, last: "" });
+      k.count++;
+      k.last = e.load || k.last;
+    }
+  }
+  const avg = mins.length
+    ? Math.round(mins.reduce((a, b) => a + b) / mins.length)
+    : 0;
+  console.log(`Total sessions: ${sessions.length}`);
+  console.log(`Average duration: ${avg} min`);
+  console.log(`Sessions by day: ${JSON.stringify(byDay)}`);
+  for (const e of Object.values(ex)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5))
+    console.log(
+      `  - ${e.name}: ${e.count} sessions (last: ${e.last || "none"})`,
+    );
+}
+
+/**
+ * pre-commit: validates staged data/ text files.
+ *
+ * @returns {number} Exit code.
+ */
+function preCommit() {
+  const files = git([
+    "diff",
+    "--cached",
+    "--name-only",
+    "--diff-filter=ACMR",
+    "--",
+    "data",
+  ])
+    .split("\n")
+    .filter((f) => f.endsWith(".txt"));
+  const errs = [];
+  for (const f of files) {
+    const text = git(["show", `:${f}`]);
+    errs.push(...lint(f, text));
+    if (f !== "data/routine.txt") {
+      const v = validateSession(parseSession(text));
+      errs.push(...v.errors.map((e) => `${f}: ${e}`));
+    }
+  }
+  for (const e of errs) console.error(`pre-commit: ${e}`);
+  return errs.length ? 1 : 0;
+}
+
+/**
+ * post-commit: fires the lifecycle event a manual commit made.
+ *
+ * @returns {Promise<number>} Exit code.
+ */
+async function postCommit() {
+  const changes = git([
+    "diff-tree",
+    "--no-commit-id",
+    "--name-status",
+    "--no-renames",
+    "-r",
+    "--root",
+    "HEAD",
+  ])
+    .split("\n")
+    .map((l) => l.split("\t"));
+  const log = changes.find(
+    ([s, f]) => s === "A" && /^data\/log\/.+\.txt$/.test(f),
+  );
+  const sess = changes.find(([, f]) => f === "data/session.txt");
+  const [event, file] = log
+    ? ["post-save", log[1]]
+    : sess?.[0] === "A"
+      ? ["post-start", sess[1]]
+      : sess?.[0] === "M"
+        ? ["post-stop", sess[1]]
+        : [];
+  if (!event) return 0;
+  const s = parseSession(git(["show", `HEAD:${file}`]));
+  if (event === "post-stop" && !s.endAt) return 0;
+  await telemetry.track({
+    category: "hook",
+    action: event,
+    label: s.day,
+    data: { ok: true, source: "git", id: path.basename(file, ".txt") },
+  });
+  return 0;
+}
+
+/**
+ * pre-push: Forgejo has no CI, so a push carrying code runs check and tests; data-only pushes pass.
+ *
+ * @param {string} stdin Ref lines from git.
+ * @returns {number} Exit code.
+ */
+function prePush(stdin) {
+  const zero = /^0+$/;
+  const code = stdin
+    .split("\n")
+    .map((l) => l.trim().split(/\s+/))
+    .filter((p) => p.length === 4 && !zero.test(p[1]))
+    .some(([, local, , remote]) =>
+      git(
+        zero.test(remote)
+          ? ["log", "--name-only", "--format=", local, "--not", "--remotes"]
+          : ["diff", "--name-only", `${remote}..${local}`],
+      )
+        .split("\n")
+        .some((f) => f && !f.startsWith("data/")),
+    );
+  if (!code) return 0;
+  for (const script of ["check", "test"]) {
+    const r = spawnSync("npm", ["run", script], {
+      cwd: root,
+      stdio: "inherit",
+    });
+    if (r.status !== 0) return r.status || 1;
+  }
+  return 0;
+}
+
+const usage =
+  "usage: swole <start [DAY]|stop|save|serve [PORT] [HOST]|setup|validate|stats|hook <pre-commit|post-commit|pre-push>>";
+
+/**
+ * CLI entry.
+ *
+ * @param {string[]} argv Arguments after the script.
+ * @returns {Promise<number>} Exit code.
+ */
+async function main([cmd, ...args]) {
+  await ready;
+  if (cmd === "start") {
+    const s = await service().start(args[0]);
+    console.log(`started ${s.day}: data/session.txt`);
+  } else if (cmd === "stop") {
+    await service().stop(await active());
+    console.log("stopped: data/session.txt");
+  } else if (cmd === "save") {
+    const { id, saved } = await service().save(await active());
+    console.log(`saved ${saved} exercises as ${id}`);
+  } else if (cmd === "serve")
+    serve(Number(args[0]) || 4173, args[1] || "127.0.0.1");
+  else if (cmd === "setup") {
+    git(["config", "core.hooksPath", ".githooks"]);
+    console.log("core.hooksPath=.githooks");
+  } else if (cmd === "validate") {
+    const files = ["routine.txt", "session.txt"].map((f) => path.join(data, f));
+    const logDir = path.join(data, "log");
+    for (const f of await fs
+      .readdir(logDir, { recursive: true })
+      .catch(() => []))
+      if (f.endsWith(".txt")) files.push(path.join(logDir, f));
+    const errs = [];
+    for (const f of files) {
+      const text = await fs.readFile(f, "utf8").catch(() => null);
+      if (text !== null) errs.push(...lint(path.relative(root, f), text));
+    }
+    for (const e of errs) console.error(e);
+    if (errs.length) return 1;
+    console.log("ok");
+  } else if (cmd === "stats") await stats();
+  else if (cmd === "hook" && args[0] === "pre-commit") return preCommit();
+  else if (cmd === "hook" && args[0] === "post-commit") return postCommit();
+  else if (cmd === "hook" && args[0] === "pre-push")
+    return prePush(readFileSync(0, "utf8"));
+  else {
+    console.error(usage);
+    return 1;
+  }
+  return 0;
+}
+
+main(process.argv.slice(2)).then(
+  (code) => (process.exitCode = code),
+  (e) => {
+    console.error(e?.message ?? e);
+    process.exitCode = 1;
+  },
+);

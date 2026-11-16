@@ -58,7 +58,7 @@ export function consoleSink() {
  * Creates a JSONL file telemetry sink.
  *
  * @param {string} filePath Destination file path.
- * @param {{ appendFile: (path: string, data: string, enc: string) => Promise<void> }} fs File system interface.
+ * @param {{ appendFile: (path: string, data: string, enc: any) => Promise<void> }} fs File system interface.
  * @returns {{ write: (evt: TelemetryEvent) => Promise<void> }} JSONL file sink instance.
  */
 export function jsonlSink(filePath, fs) {
