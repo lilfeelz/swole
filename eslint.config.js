@@ -39,6 +39,7 @@ export default [
         Utilities: "readonly",
         HtmlService: "readonly",
         google: "readonly",
+        URL: "readonly",
       },
     },
     rules: {

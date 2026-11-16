@@ -1,0 +1,7 @@
+name = "swole"
+main = "dist/cf/worker.js"
+compatibility_date = "2024-04-01"
+
+kv_namespaces = [
+  { binding = "SWOLE_KV", id = "swole_kv" }
+]
