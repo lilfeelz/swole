@@ -1,35 +1,46 @@
-name: Deploy Google Apps Script
+name: deploy-gas
+
+# Pushes dist/gas to the gswole Apps Script project and moves the fixed web app
+# deployment to it, so the phone URL never changes. Auth: clasp OAuth refresh token
+# in the CLASPRC_JSON secret (Apps Script has no OIDC).
 
 on:
   push:
     branches: [main]
     paths:
-      - "src/**"
-      - "scripts/**"
+      [
+        "src/**",
+        "workline/**",
+        "scripts/build.js",
+        "package-lock.json",
+        ".clasp.json",
+      ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-gas
+  cancel-in-progress: false
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Google Apps Script Bundle
-        run: npm run build
-
-      - name: Push to Google Apps Script via Clasp
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: clasp auth
         env:
           CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
-        if: env.CLASPRC_JSON != ''
         run: |
-          mkdir -p ~/.clasprc.json
-          echo "$CLASPRC_JSON" > ~/.clasprc.json
-          npx @google/clasp push --rootDir dist/gas --force
+          umask 077
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          node -e "JSON.parse(require('fs').readFileSync(process.env.HOME + '/.clasprc.json','utf8'))"
+      - run: npx --yes @google/clasp@3.4.1 push --force
+      - run: npx --yes @google/clasp@3.4.1 deploy -i AKfycbxeqB_Kp-C5M7kqrnZxe0JMaelhyrHvqq6MCFIdQXF2egqzFG-fxYrldTwr0Oi6VgI -d "${{ github.sha }}"

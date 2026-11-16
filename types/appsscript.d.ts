@@ -57,3 +57,6 @@ declare interface HtmlOutput {
   addMetaTag(name: string, content: string): HtmlOutput;
   setXFrameOptionsMode(mode: unknown): HtmlOutput;
 }
+
+/** Apps Script client bridge. */
+declare const google: { script: { run: any } };

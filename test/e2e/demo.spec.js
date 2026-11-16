@@ -178,13 +178,19 @@ test("demo has no backend editors: Routine and Log tabs are disabled", async ({
   await expect(page.locator("#tab-routine")).not.toHaveAttribute("href");
 });
 
-test("canonicalises a valid line on blur", async ({ page }) => {
+test("canonicalises a valid line on blur without fetching wasm", async ({
+  page,
+}) => {
+  const wasm = [];
+  page.on("request", (r) => r.url().includes(".wasm") && wasm.push(r.url()));
+  await page.reload();
   await page.locator("#day").selectOption("MONDAY");
   const input = page.locator("#list .row input").first();
   await input.fill("2x4   140kg  2min");
   await input.blur();
   await expect(input).toHaveValue("2x4 140kg 2m");
   await expect(page.locator("#list .row.invalid")).toHaveCount(0);
+  expect(wasm).toEqual([]);
 });
 
 test("an invalid line shows the reason and blocks save until fixed", async ({

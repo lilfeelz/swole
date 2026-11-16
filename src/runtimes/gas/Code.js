@@ -1,78 +1,54 @@
 import { createSheetStore } from "../../stores/sheet.js";
 import { createService } from "../../core/service.js";
+import { createTelemetry, consoleSink } from "../../core/telemetry.js";
 
 /**
- * @typedef {import("../../../types/swole.d.ts").Session} Session
- * @typedef {import("../../../types/swole.d.ts").ApiPayload} ApiPayload
- */
-
-/**
- * Returns a configured Service instance for the active spreadsheet.
+ * Service over the bound spreadsheet; Routine and Log tabs link to their sheet tabs.
  *
  * @returns {import("../../../types/swole.d.ts").Api} Swole service.
  */
-function getService() {
+function service() {
   const ss = SpreadsheetApp.getActive();
-  const store = createSheetStore({ spreadsheet: ss });
-  const sheetUrl = ss.getUrl();
-  const routineSheet = ss.getSheetByName("routine");
-  const logSheet = ss.getSheetByName("log");
-
-  const routineGid = routineSheet ? routineSheet.getSheetId() : 0;
-  const logGid = logSheet ? logSheet.getSheetId() : 0;
-
+  const gid = (...names) =>
+    names
+      .map((n) => ss.getSheetByName(n))
+      .find(Boolean)
+      ?.getSheetId();
+  const link = (g) => (g === undefined ? undefined : `${ss.getUrl()}#gid=${g}`);
   return createService({
-    store,
+    store: createSheetStore({ spreadsheet: ss }),
+    telemetry: createTelemetry([consoleSink()]),
     navLinks: {
-      routine: `${sheetUrl}#gid=${routineGid}`,
-      log: `${sheetUrl}#gid=${logGid}`,
+      routine: link(gid("routine", "ad infinitum", "ad infinitium")),
+      log: link(gid("log")),
     },
   });
 }
 
 /**
- * Serves the mobile web interface.
+ * google.script.run drops Dates, so results cross as JSON.
+ *
+ * @param {Promise<any>} p Service result.
+ * @returns {Promise<any>} Plain result.
+ */
+const plain = async (p) => JSON.parse(JSON.stringify((await p) ?? null));
+
+/**
+ * Serves the UI; the file is plain HTML, never evaluated as a template.
  *
  * @returns {any} HTML output.
  */
 export function doGet() {
-  const template = HtmlService.createTemplateFromFile("Index");
-  return template
-    .evaluate()
+  return HtmlService.createHtmlOutputFromFile("Index")
     .setTitle("Workout")
     .addMetaTag(
       "viewport",
       "width=device-width, initial-scale=1, viewport-fit=cover",
-    )
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    );
 }
 
-/**
- * Inlines HTML partials (styles, scripts).
- *
- * @param {string} filename Partial file name.
- * @returns {string} File content.
- */
-export function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
-}
-
-/**
- * RPC endpoint to load workout data for a day.
- *
- * @param {string} [day] Day name.
- * @returns {Promise<ApiPayload>} Workout payload.
- */
-export async function apiLoad(day) {
-  return getService().load(day);
-}
-
-/**
- * RPC endpoint to save a completed workout session.
- *
- * @param {Session} session Completed session.
- * @returns {Promise<{ ok: boolean, saved: number, id: string }>} Save result.
- */
-export async function apiSave(session) {
-  return getService().save(session);
-}
+export const apiLoad = (day) => plain(service().load(day));
+export const apiStart = (day) => plain(service().start(day));
+export const apiStop = (s) => plain(service().stop(s));
+export const apiSave = (s) => plain(service().save(s));
+export const apiTrack = (e) => plain(service().track(e));
