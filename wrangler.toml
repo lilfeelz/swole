@@ -9,6 +9,7 @@ binding = "ASSETS"
 run_worker_first = ["/api/*"]
 
 # Create with `wrangler kv namespace create SWOLE_KV` and put its id here.
+# A local `wrangler.local.toml` (gitignored) can hold your own id; see README.
 [[kv_namespaces]]
 binding = "SWOLE_KV"
-id = "fa2ae5fbe4924638b4fa8b1c118aab02"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
