@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Publishes Forgejo main and tags to GitHub without data/: filter a temp clone, verify, push.
-# Usage: mirror.sh [SOURCE] [TARGET]; defaults are the Forgejo and GitHub remotes.
+# Usage: mirror.sh [SOURCE] [TARGET]; defaults are the private Forgejo source and its public GitHub copy.
 set -euo pipefail
 
-src="${1:-ssh://git@git.lilfeelz.org:2222/lilfeelz/swole.git}"
+src="${1:-ssh://git@git.lilfeelz.org:2222/lilfeelz/swole-src.git}"
 dst="${2:-git@github-lilfeelz:lilfeelz/swole.git}"
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
@@ -18,6 +18,7 @@ if [ -n "$leaks" ]; then
   exit 1
 fi
 
-# filter-repo is deterministic, so the rewritten history stays a fast-forward of the last mirror.
+# filter-repo is deterministic, so the rewritten history fast-forwards the last mirror
+# once GitHub main holds the same filtered commit.
 git push -q "$dst" refs/heads/main:refs/heads/main 'refs/tags/*:refs/tags/*'
 echo "mirror: pushed main and tags to $dst"

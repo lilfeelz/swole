@@ -33,7 +33,7 @@ node src/cli.js save         # archives data/log/<yy>/<ww>/<unix>.txt, commits, 
 - HTTP POST endpoints: `/api/load`, `/api/start`, `/api/stop`, `/api/save`, `/api/track`; start accepts optional `day`.
 - Local telemetry appends call names, durations, outcomes, counts and error strings to `data/telemetry.jsonl`.
 - `data/`, including telemetry, can be committed into the private primary. No third-party telemetry call is made by the local CLI.
-- Public mirror strips `data/` history. `npm run mirror` filters/checks a temporary clone before pushing main/tags, but current preparation metadata prevents fast-forwarding; do not force-push. Realignment needs owner approval.
+- Public mirror strips `data/` history. `npm run mirror` filters and checks a temporary clone of the private primary (`forgejo:lilfeelz/swole-src`) before pushing main and tags to `lilfeelz/swole` on GitHub. Until GitHub `main` is realigned once to the filtered commit, the push is rejected as non-fast-forward; do not force-push without owner approval.
 
 ## Layout
 
