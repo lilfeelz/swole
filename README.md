@@ -57,7 +57,7 @@ test/                # Node unit tests and Playwright browser scenarios
 - CI: GitHub runs check/build/unit/browser tests; private primary uses pre-push check/tests for code changes.
 - Demo deploy: `pages.yml` publishes `dist/demo`; APK workflow builds debug-signed artifacts and attaches them on `v*` tags.
 - GAS deploy: manually dispatch `deploy-gas.yml`; requires secrets `CLASPRC_JSON`, `CLASP_SCRIPT_ID` and variable `GAS_DEPLOYMENT_ID`. No live deploy tested; each production deploy needs owner approval.
-- Worker: create a namespace with `npx wrangler kv namespace create SWOLE_KV`, set its ID in ignored `wrangler.local.toml`, then `npx wrangler deploy -c wrangler.local.toml`.
+- Worker: `npm run build`, create KV with `npx wrangler kv namespace create SWOLE_KV`, run `cp wrangler.toml wrangler.local.toml`, replace its KV ID, then `npx wrangler deploy -c wrangler.local.toml`.
 - Apps Script config: copy `.clasp.example.json` to ignored `.clasp.json`, supply your own script ID; never commit credentials.
 - Rollback: restore a prior source revision and redeploy the selected backend; no unified rollback command or automatic data rollback.
 
