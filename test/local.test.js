@@ -30,10 +30,15 @@ git("config", "user.email", "t@example.com");
 git("config", "user.name", "t");
 for (const p of ["src", "workline", "node_modules", ".githooks"])
   fs.symlinkSync(path.join(repo, p), path.join(dir, p));
-write(".gitignore", "/src\n/workline\n/node_modules\n/.githooks\n");
+write(
+  ".gitignore",
+  fs.readFileSync(path.join(repo, ".gitignore"), "utf8") +
+    "\n/src\n/workline\n/node_modules\n/.githooks\n",
+);
 fs.mkdirSync(path.join(dir, "data"));
 write("data/routine.txt", "MONDAY\nDeadlift / 2x4+\n");
 git("add", "-A");
+git("add", "-f", "data/routine.txt");
 git("commit", "-q", "-m", "init");
 
 test("setup points git at .githooks", () => {
