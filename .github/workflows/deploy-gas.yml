@@ -13,7 +13,7 @@ on:
         "workline/**",
         "scripts/build.js",
         "package-lock.json",
-        ".clasp.json",
+        ".clasp.example.json",
       ]
   workflow_dispatch:
 
@@ -42,5 +42,14 @@ jobs:
           umask 077
           printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
           node -e "JSON.parse(require('fs').readFileSync(process.env.HOME + '/.clasprc.json','utf8'))"
+      - name: write .clasp.json
+        env:
+          CLASP_SCRIPT_ID: ${{ secrets.CLASP_SCRIPT_ID }}
+        run: |
+          test -n "$CLASP_SCRIPT_ID"
+          node -e "require('fs').writeFileSync('.clasp.json', JSON.stringify({ scriptId: process.env.CLASP_SCRIPT_ID, rootDir: 'dist/gas' }, null, 2))"
       - run: npx --yes @google/clasp@3.4.1 push --force
-      - run: npx --yes @google/clasp@3.4.1 deploy -i AKfycbxeqB_Kp-C5M7kqrnZxe0JMaelhyrHvqq6MCFIdQXF2egqzFG-fxYrldTwr0Oi6VgI -d "${{ github.sha }}"
+      - name: deploy
+        env:
+          GAS_DEPLOYMENT_ID: ${{ vars.GAS_DEPLOYMENT_ID }}
+        run: npx --yes @google/clasp@3.4.1 deploy -i "$GAS_DEPLOYMENT_ID" -d "${{ github.sha }}"

@@ -5,6 +5,9 @@
 /playwright-report/
 .DS_Store
 .clasprc.json
+.clasp.json
+.clasp.json.local
+wrangler.local.toml
 /data/*
 /android/app/src/main/assets/
 /workline/nvim/parser/

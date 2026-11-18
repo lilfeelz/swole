@@ -1,5 +1,8 @@
 .DS_Store
 .clasprc.json
+.clasp.json
+.clasp.json.local
+wrangler.local.toml
 coverage/
 dist/
 node_modules/

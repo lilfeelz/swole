@@ -3,8 +3,7 @@
   "name": "swole",
   "version": "0.1.0",
   "type": "module",
-  "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "node": ">=22.0.0"
   },
