@@ -1,55 +1,80 @@
 # swole
 
-One workout logger with one UI and one model in JS, running on five backends. Exercise lines use [workline](workline/SPEC.md) notation: `Deadlift / 2x4 / 140kg`.
+## Purpose
 
-<img src="docs/screenshot.png" alt="swole on a phone" width="320">
+- Demonstrates one workout model and UI across five storage/runtime adapters, with portable text data and offline support.
+- Exercise notation: `Deadlift / 2x4 / 140kg`; parser and editor support live in [workline/](workline/SPEC.md).
 
-Regenerate with `npm run build && npm run screenshot`.
+## Usage
 
-| Runtime | Store                                         | Where                          |
-| ------- | --------------------------------------------- | ------------------------------ |
-| local   | git repo, `data/`                             | `npm run serve`, CLI           |
-| apk     | git repo in IndexedDB (isomorphic-git)        | Android WebView shell, offline |
-| gas     | gswole Google Sheet, `routine` and `log` tabs | Apps Script web app            |
-| cf      | Workers KV                                    | Cloudflare Worker              |
-| demo    | localStorage, seeded from `sample/`           | GitHub Pages                   |
-
-## Use
+Run the sample-data demo without credentials or workout commits:
 
 ```sh
+git clone https://github.com/lilfeelz/swole.git
+cd swole
 npm ci
-npm run setup                 # core.hooksPath=.githooks
-npm run build                 # dist/{local,demo,apk,gas}, android assets
-node src/cli.js start [DAY]   # writes and commits data/session.txt; DAY defaults to today
-node src/cli.js stop          # stamps END, commits
-node src/cli.js save          # moves it to data/log/<yy>/<ww>/<unix>.txt, commits, pushes if a remote is set
-npm run serve                 # UI and api on 127.0.0.1:4173
+npm run build
+python3 -m http.server 4173 --bind 127.0.0.1 -d dist/demo
 ```
 
-The service fires post-start, post-stop and post-save. Git hooks cover manual git use: pre-commit validates `data/` lines, post-commit fires the lifecycle event, and pre-push runs check and tests when the push carries code.
+- Open `http://127.0.0.1:4173`; demo state stays in this browser's localStorage, seeded from `sample/`.
+- Local: `npm run serve` serves UI/API at `127.0.0.1:4173`; Git stores sessions in `data/`.
+- APK: Android WebView, offline Git repository in IndexedDB; GAS: Google Sheet `routine`/`log` tabs; CF: Workers KV.
+- Build outputs: `dist/{local,demo,apk,gas}` plus Android assets; CF uses its runtime entrypoint directly.
+- Use local CLI only in a private repository: it commits workout data and `save` pushes if a remote is configured.
 
-Over HTTP, `POST /api/start` with `{"day":"MONDAY"}` starts the same session; `day` is optional and defaults to today. The matching routes are `/api/load`, `/api/stop`, `/api/save` and `/api/track`.
+```sh
+npm run setup                # installs repository Git hooks
+node src/cli.js start MONDAY # commits data/session.txt
+node src/cli.js stop         # stamps END and commits
+node src/cli.js save         # archives data/log/<yy>/<ww>/<unix>.txt, commits, may push
+```
 
-## Data and privacy
+- HTTP POST endpoints: `/api/load`, `/api/start`, `/api/stop`, `/api/save`, `/api/track`; start accepts optional `day`.
+- Local telemetry appends call names, durations, outcomes, counts and error strings to `data/telemetry.jsonl`.
+- `data/`, including telemetry, can be committed into the private primary. No third-party telemetry call is made by the local CLI.
+- Public mirror strips `data/` history. `npm run mirror` filters/checks a temporary clone before pushing main/tags, but current preparation metadata prevents fast-forwarding; do not force-push. Realignment needs owner approval.
 
-Local CLI runs append telemetry to `data/telemetry.jsonl`: call names, durations, outcomes, counts and error strings. It makes no third-party network call, and `/data/*` is gitignored, so telemetry and sessions leave the machine only when you push the data repository. Sessions can equally live in a git remote, Workers KV, a Google Sheet or browser storage, each controlled by whoever deploys that backend.
+## Layout
 
-## Data and mirror
+```text
+src/core/            # shared model, service, HTTP, hooks and telemetry
+src/ui/              # shared HTML/CSS/JS interface
+src/runtimes/        # local, demo, APK, Apps Script and Worker entrypoints
+src/stores/          # Git, browser, KV and spreadsheet adapters
+src/cli.js           # local HTTP server, session commands and Git hooks
+workline/            # notation specification, parser, WASM and editor support
+sample/              # public routine and logs used by demo builds
+android/             # WebView APK shell and Gradle build
+scripts/             # bundles, screenshot generation and filtered mirroring
+test/                # Node unit tests and Playwright browser scenarios
+.github/workflows/   # GitHub CI, Pages, Apps Script and APK automation
+```
 
-`data/` lives on Forgejo only. `npm run mirror` filters it out of a temp clone and pushes `main` and tags to GitHub. It refuses to push if any `data/` path or `.clasprc.json` remains.
+## Operate
 
-## Publication setup
+- Owner: lilfeelz. Private primary owns workout history; GitHub is a filtered code/sample mirror.
+- CI: GitHub runs check/build/unit/browser tests; private primary uses pre-push check/tests for code changes.
+- Demo deploy: `pages.yml` publishes `dist/demo`; APK workflow builds debug-signed artifacts and attaches them on `v*` tags.
+- GAS deploy: manually dispatch `deploy-gas.yml`; requires secrets `CLASPRC_JSON`, `CLASP_SCRIPT_ID` and variable `GAS_DEPLOYMENT_ID`. No live deploy tested; each production deploy needs owner approval.
+- Worker: create a namespace with `npx wrangler kv namespace create SWOLE_KV`, set its ID in ignored `wrangler.local.toml`, then `npx wrangler deploy -c wrangler.local.toml`.
+- Apps Script config: copy `.clasp.example.json` to ignored `.clasp.json`, supply your own script ID; never commit credentials.
+- Rollback: restore a prior source revision and redeploy the selected backend; no unified rollback command or automatic data rollback.
 
-Owner-scoped ids are not committed. A fork must supply its own:
+```sh
+npm run check
+npm test
+npm run build
+npx playwright install chromium
+npm run test:e2e
+```
 
-- Apps Script: `cp .clasp.example.json .clasp.json` and set `scriptId`. `deploy-gas.yml` instead generates `.clasp.json` from the `CLASP_SCRIPT_ID` secret and reads the fixed deployment from the `GAS_DEPLOYMENT_ID` repository variable.
-- Worker: create your own namespace with `npx wrangler kv namespace create SWOLE_KV` and put its id in `wrangler.toml`, or keep a gitignored `wrangler.local.toml` and run `npx wrangler deploy -c wrangler.local.toml`.
+## Dependencies
 
-`.clasp.json`, `.clasp.json.local` and `wrangler.local.toml` are gitignored.
+- Node.js 22+, npm; Python 3 for demo serving/browser tests; Chromium for Playwright.
+- Runtime: isomorphic-git, lightning-fs, buffer, web-tree-sitter; tooling: esbuild, TypeScript, ESLint, Prettier, Playwright.
+- Optional targets: Android SDK/JDK 17, Cloudflare account/KV/Wrangler, Google Sheet/Apps Script/clasp; mirroring needs git-filter-repo.
 
-## Deploys
+## Status
 
-- Apps Script: `deploy-gas.yml` runs `clasp push` and redeploys the fixed web app deployment. It needs the `CLASPRC_JSON` and `CLASP_SCRIPT_ID` secrets plus the `GAS_DEPLOYMENT_ID` repository variable.
-- APK: `apk.yml` builds a debug APK and attaches it to a release on a `v*` tag. Install with `adb -s <device-serial> install app-debug.apk`.
-- Worker: create the KV namespace, set its id in `wrangler.toml` (or `wrangler.local.toml`), then `npx wrangler deploy`.
-- Demo: `pages.yml` publishes `dist/demo`.
+- Live: five tested runtime adapters, private workout primary and filtered public code/sample mirror; deployed endpoints unverified. Planned: retain the showcase and realign mirroring, no new service.
