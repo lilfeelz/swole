@@ -5,16 +5,6 @@ name: deploy-gas
 # in the CLASPRC_JSON secret (Apps Script has no OIDC).
 
 on:
-  push:
-    branches: [main]
-    paths:
-      [
-        "src/**",
-        "workline/**",
-        "scripts/build.js",
-        "package-lock.json",
-        ".clasp.example.json",
-      ]
   workflow_dispatch:
 
 permissions:
