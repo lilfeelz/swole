@@ -14,6 +14,8 @@ Spec, parser and editor support live in [workline/](workline/SPEC.md).
 
 ## Quickstart
 
+Live demo: <https://docs.lilfeelz.org/swole/>.
+
 ```sh
 git clone https://github.com/lilfeelz/swole.git
 cd swole
