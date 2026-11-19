@@ -26,13 +26,13 @@ Open <http://127.0.0.1:4173>. The demo keeps state in localStorage, seeded from 
 
 ## Runtimes
 
-| Runtime | Store | Output |
-|---|---|---|
-| local | git tree under `data/` | `dist/local` |
-| demo | browser localStorage | `dist/demo` |
-| apk | git in IndexedDB | `android/` |
-| gas | Google Sheet `routine`/`log` tabs | `dist/gas` |
-| cf | Workers KV | Worker entrypoint |
+| Runtime | Store                             | Output            |
+| ------- | --------------------------------- | ----------------- |
+| local   | git tree under `data/`            | `dist/local`      |
+| demo    | browser localStorage              | `dist/demo`       |
+| apk     | git in IndexedDB                  | `android/`        |
+| gas     | Google Sheet `routine`/`log` tabs | `dist/gas`        |
+| cf      | Workers KV                        | Worker entrypoint |
 
 ```text
 src/core/      model, service, HTTP, lifecycle hooks, telemetry
