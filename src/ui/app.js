@@ -1,6 +1,19 @@
 import { ready, canon } from "../workline.js";
 
 /**
+ * Day the visitor picked before the UI mounted. A runtime can spend time seeding its
+ * store before calling mount(), and a pick made in that window must not be lost.
+ */
+let earlyDay = "";
+
+if (typeof document !== "undefined") {
+  document.addEventListener("change", (evt) => {
+    const el = /** @type {HTMLSelectElement|null} */ (evt.target);
+    if (el && el.id === "day") earlyDay = el.value;
+  });
+}
+
+/**
  * Mounts the UI on a transport.
  *
  * @param {import("../../types/swole.d.ts").Api} api Runtime transport.
@@ -20,6 +33,8 @@ export function mount(api) {
   let timerInterval = null;
   let startedAt = null;
   let busy = false;
+  /** Latest day load; a slower earlier response must not overwrite it. */
+  let loadSeq = 0;
 
   /**
    * Formats a second count as HH:MM:SS.
@@ -556,14 +571,17 @@ export function mount(api) {
    * @returns {Promise<void>} Resolves once rendered.
    */
   async function load(day) {
+    const seq = ++loadSeq;
     const draft = day ? loadDraft(day) : null;
     if (!draft || !draft.length) {
       $("list").innerHTML = '<div class="empty">loading…</div>';
     }
     try {
       const data = await api.load(day);
+      if (seq !== loadSeq) return;
       render(data);
     } catch (err) {
+      if (seq !== loadSeq) return;
       const msg = err instanceof Error ? err.message : String(err);
       const draftNow = day ? loadDraft(day) : null;
       if (!draftNow || !draftNow.length) {
@@ -731,7 +749,7 @@ export function mount(api) {
     }
   })();
 
-  const targetDay = (activeSession && activeSession.day) || "";
+  const targetDay = (activeSession && activeSession.day) || earlyDay || "";
   if (targetDay) {
     const cachedTarget = localStorage.getItem("swole_day_" + targetDay);
     if (cachedTarget) {
