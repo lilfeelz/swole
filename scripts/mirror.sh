@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
-# Publishes Forgejo main and tags to GitHub without data/: filter a temp clone, verify, push.
-# Usage: mirror.sh [SOURCE] [TARGET]; defaults are the private Forgejo source and its public GitHub copy.
+# Publishes a private source repository to a public mirror without data/.
+# Usage: mirror.sh SOURCE TARGET (or set SWOLE_SOURCE and SWOLE_TARGET).
 set -euo pipefail
 
-src="${1:-ssh://git@git.lilfeelz.org:2222/lilfeelz/swole-src.git}"
-dst="${2:-git@github-lilfeelz:lilfeelz/swole.git}"
+src="${1:-${SWOLE_SOURCE:-}}"
+dst="${2:-${SWOLE_TARGET:-}}"
+if [ -z "$src" ] || [ -z "$dst" ]; then
+  echo "mirror: pass SOURCE and TARGET, or set SWOLE_SOURCE and SWOLE_TARGET" >&2
+  exit 2
+fi
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
