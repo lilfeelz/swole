@@ -22,12 +22,18 @@ if [ -n "$leaks" ]; then
   exit 1
 fi
 
-git fetch -q --no-tags "$dst" refs/heads/main:refs/remotes/public/main
-public=$(git rev-parse refs/remotes/public/main)
+public=
+if git ls-remote --exit-code "$dst" refs/heads/main >/dev/null; then
+  git fetch -q --no-tags "$dst" refs/heads/main:refs/remotes/public/main
+  public=$(git rev-parse refs/remotes/public/main)
+else
+  status=$?
+  [ "$status" -eq 2 ] || exit "$status"
+fi
 filtered=$(git rev-parse refs/heads/main)
 publish=$filtered
 
-if ! git merge-base --is-ancestor "$public" "$filtered"; then
+if [ -n "$public" ] && ! git merge-base --is-ancestor "$public" "$filtered"; then
   # GitHub signs its own commits. The filter strips signatures, so bridge the
   # reviewed public history without rewriting it or accepting later divergence.
   anchor=35c5ff49ebda0cb992ebce15c7098f3d7fb90aa6
