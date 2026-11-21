@@ -15,13 +15,13 @@ workline/nvim/build.sh
 Then add this directory to `runtimepath`, for example lazy.nvim:
 
 ```lua
-{ dir = "~/Workspaces/lilfeelz/swole/workline/nvim", name = "workline" }
+{ dir = "/path/to/swole/workline/nvim", name = "workline" }
 ```
 
 or vim.pack:
 
 ```lua
-vim.pack.add({ "~/Workspaces/lilfeelz/swole/workline/nvim" })
+vim.pack.add({ "/path/to/swole/workline/nvim" })
 ```
 
 Or from a shell, `nvim --cmd "set rtp+=/path/to/swole/workline/nvim"`.
