@@ -5,7 +5,7 @@ line. Built to live in a spreadsheet cell and stay readable there.
 Syntax is inspired by Liftosaur's Liftoscript exercise lines; nothing here is
 derived from its source.
 
-Implementations in any language must pass `test/vectors.json`. Syntax comes
+Implementations in any language must pass `workline/vectors.json`. Syntax comes
 from the shared tree-sitter grammar; each language adds only the semantics below.
 
 ## Examples
@@ -113,23 +113,14 @@ Serializing produces:
 
 ## Legacy input
 
-The previous grammar (`JakobMelchard/workout` `public/grammar.js`) used
-`SETSxVALUE@WEIGHT[UNIT]` with `@` meaning weight and a default unit of kg.
-v1 reads `@` as RPE. For migration:
+The previous grammar used `SETSxVALUE@WEIGHT[UNIT]` with `@` meaning weight
+and a default unit of kg. v1 reads `@` as RPE:
 
 - `@<num>kg` / `@<num>lb` is accepted as weight and serializes in canonical
   form (`3x8@60kg` becomes `3x8 60kg`).
-- `@<num>` without a unit is RPE. Values above 10 error, which flags old
-  unitless weights for manual fixing. Unitless values up to 10
-  are valid both ways, so the migration lists them instead of converting.
+- `@<num>` without a unit is RPE; values above 10 error.
 - Legacy target suffixes other than `r`, `s`, `m`, `min`, `km` error. Note
   that a legacy `m` meant meters and now means minutes.
-
-`scripts/migrate-legacy.js` applies these rules to whole cells: it parses each
-line with the legacy grammar, rewrites `@<num>[kg|lb]` as a weight (unitless
-above 10 means kg), maps legacy `r` to reps and keeps `s`, `min`, `km`, checks the
-result with `parse`, and lists every line it cannot convert for manual fixing.
-Legacy `m` is always listed, never converted. Usage is in the README.
 
 ## Not in v1
 
